@@ -90,6 +90,10 @@ test-sub:
 	@echo "  >  \033[32mRunning substrate tests...\033[0m "
 	go test ./chains/substrate
 
+test-ton:
+	@echo "  >  \033[32mRunning substrate tests...\033[0m "
+	go test ./chains/ton
+
 docker-start:
 	./scripts/docker/start-docker.sh
 

@@ -51,6 +51,7 @@ var devFlags = []cli.Flag{
 }
 
 var importFlags = []cli.Flag{
+	config.TONImportFlag,
 	config.EthereumImportFlag,
 	config.PrivateKeyFlag,
 	config.Sr25519Flag,
@@ -65,6 +66,7 @@ var accountCommand = cli.Command{
 	Description: "The accounts command is used to manage the bridge keystore.\n" +
 		"\tTo generate a new account (key type generated is determined on the flag passed in): chainbridge accounts generate\n" +
 		"\tTo import a keystore file: chainbridge accounts import path/to/file\n" +
+		"\tTo import a ton keystore file: chainbridge accounts import --ton path/to/file\n" +
 		"\tTo import a geth keystore file: chainbridge accounts import --ethereum path/to/file\n" +
 		"\tTo import a private key file: chainbridge accounts import --privateKey private_key\n" +
 		"\tTo list keys: chainbridge accounts list",
@@ -84,6 +86,7 @@ var accountCommand = cli.Command{
 			Flags:  importFlags,
 			Description: "The import subcommand is used to import a keystore for the bridge.\n" +
 				"\tA path to the keystore must be provided\n" +
+				"\tUse --ton to import an ton keystore from external sources\n" +
 				"\tUse --ethereum to import an ethereum keystore from external sources such as geth\n" +
 				"\tUse --privateKey to create a keystore from a provided private key.",
 		},
@@ -190,6 +193,8 @@ func run(ctx *cli.Context) error {
 
 		if chain.Type == "ethereum" {
 			newChain, err = ethereum.InitializeChain(chainConfig, logger, sysErr, m)
+		} else if chain.Type == "ton" {
+			// newChain, err = ton.InitializeChain(chainConfig, logger, sysErr, m)
 		} else if chain.Type == "substrate" {
 			newChain, err = substrate.InitializeChain(chainConfig, logger, sysErr, m)
 		} else {

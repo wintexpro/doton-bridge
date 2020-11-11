@@ -74,6 +74,10 @@ var (
 )
 
 var (
+	TONImportFlag = &cli.BoolFlag{
+		Name:  "ton",
+		Usage: "Import an existing ton keystore.",
+	}
 	EthereumImportFlag = &cli.BoolFlag{
 		Name:  "ethereum",
 		Usage: "Import an existing ethereum keystore, such as from geth.",
