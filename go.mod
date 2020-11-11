@@ -1,6 +1,6 @@
 module github.com/ChainSafe/ChainBridge
 
-go 1.13
+go 1.15
 
 require (
 	github.com/ByKeks/chainbridge-utils v1.0.6
@@ -19,5 +19,4 @@ require (
 )
 
 replace github.com/ByKeks/chainbridge-utils => ./../../go/src/github.com/ByKeks/chainbridge-utils
-
 replace github.com/ByKeks/chainbridge-utils/ed25519 => ./../../go/src/github.com/ByKeks/chainbridge-utils/ed25519
