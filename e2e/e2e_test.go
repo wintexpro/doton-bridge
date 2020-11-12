@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ByKeks/chainbridge-utils/core"
+	"github.com/ByKeks/chainbridge-utils/msg"
 	ethChain "github.com/ChainSafe/ChainBridge/chains/ethereum"
 	subChain "github.com/ChainSafe/ChainBridge/chains/substrate"
 	eth "github.com/ChainSafe/ChainBridge/e2e/ethereum"
@@ -20,8 +22,6 @@ import (
 	ethtest "github.com/ChainSafe/ChainBridge/shared/ethereum/testing"
 	subutils "github.com/ChainSafe/ChainBridge/shared/substrate"
 	subtest "github.com/ChainSafe/ChainBridge/shared/substrate/testing"
-	"github.com/ChainSafe/chainbridge-utils/core"
-	"github.com/ChainSafe/chainbridge-utils/msg"
 	log "github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/ethereum/go-ethereum/common"

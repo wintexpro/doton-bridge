@@ -20,7 +20,7 @@ The Solidity contracts required for chainbridge. Includes deployment and interac
 ### [chainbridge-substrate](https://github.com/ChainSafe/chainbridge-substrate)
 A substrate pallet that can be integrated into a chain, as well as an example pallet to demonstrate chain integration.
 
-### [chainbridge-utils](https://github.com/ChainSafe/chainbridge-utils)
+### [chainbridge-utils](https://github.com/ByKeks/chainbridge-utils)
 A collection of packages used by the core bridging software.
 
 ### [chainbridge-deploy](https://github.com/ChainSafe/ChainBridge)

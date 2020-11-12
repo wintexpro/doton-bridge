@@ -14,13 +14,13 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/ByKeks/chainbridge-utils/core"
+	"github.com/ByKeks/chainbridge-utils/metrics/health"
+	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
+	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/chains/ethereum"
 	"github.com/ChainSafe/ChainBridge/chains/substrate"
 	"github.com/ChainSafe/ChainBridge/config"
-	"github.com/ChainSafe/chainbridge-utils/core"
-	"github.com/ChainSafe/chainbridge-utils/metrics/health"
-	metrics "github.com/ChainSafe/chainbridge-utils/metrics/types"
-	"github.com/ChainSafe/chainbridge-utils/msg"
 	log "github.com/ChainSafe/log15"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/cli/v2"
@@ -211,7 +211,7 @@ func run(ctx *cli.Context) error {
 	// Start prometheus and health server
 	if ctx.Bool(config.MetricsFlag.Name) {
 		port := ctx.Int(config.MetricsPort.Name)
-		h := health.NewHealthServer(port, c.Registry)
+		h := health.NewHealthServer(port, c.Registry, 6000) // FIXME: magic number
 
 		go func() {
 			http.Handle("/metrics", promhttp.Handler())

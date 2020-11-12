@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ByKeks/chainbridge-utils/msg"
 	events "github.com/ChainSafe/chainbridge-substrate-events"
-	"github.com/ChainSafe/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
 )
 

@@ -4,10 +4,10 @@
 package ethereum
 
 import (
+	"github.com/ByKeks/chainbridge-utils/core"
+	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
+	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/bindings/Bridge"
-	"github.com/ChainSafe/chainbridge-utils/core"
-	metrics "github.com/ChainSafe/chainbridge-utils/metrics/types"
-	"github.com/ChainSafe/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
 )
 

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ByKeks/chainbridge-utils/core"
+	"github.com/ByKeks/chainbridge-utils/keystore"
+	"github.com/ByKeks/chainbridge-utils/msg"
 	utils "github.com/ChainSafe/ChainBridge/shared/substrate"
-	"github.com/ChainSafe/chainbridge-utils/core"
-	"github.com/ChainSafe/chainbridge-utils/keystore"
-	"github.com/ChainSafe/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 )
