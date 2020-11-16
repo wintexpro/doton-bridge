@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/ByKeks/chainbridge-utils/crypto"
+	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
 	"github.com/ByKeks/chainbridge-utils/crypto/secp256k1"
 	"github.com/ByKeks/chainbridge-utils/crypto/sr25519"
 	"github.com/ByKeks/chainbridge-utils/keystore"
@@ -83,7 +84,19 @@ func handleImportCmd(ctx *cli.Context, dHandler *dataHandler) error {
 		keytype = crypto.Secp256k1Type
 	}
 
-	if ctx.Bool(config.EthereumImportFlag.Name) {
+	if ctx.Bool(config.TONImportFlag.Name) {
+		if privkeyflag := ctx.String(config.PrivateKeyFlag.Name); privkeyflag != "" {
+			// check if --password is set
+			var password []byte = nil
+			if pwdflag := ctx.String(config.PasswordFlag.Name); pwdflag != "" {
+				password = []byte(pwdflag)
+			}
+
+			_, err = importTonPrivKey(ctx, dHandler.datadir, privkeyflag, password)
+		} else {
+			return fmt.Errorf("Must provide a key to import.")
+		}
+	} else if ctx.Bool(config.EthereumImportFlag.Name) {
 		if keyimport := ctx.Args().First(); keyimport != "" {
 			// check if --password is set
 			var password []byte = nil
@@ -140,6 +153,44 @@ func getDataDir(ctx *cli.Context) (string, error) {
 		return datadir, nil
 	}
 	return "", fmt.Errorf("datadir flag not supplied")
+}
+
+func importTonPrivKey(ctx *cli.Context, datadir, key string, password []byte) (string, error) {
+	if password == nil {
+		password = keystore.GetPassword("Enter password to encrypt keystore file:")
+	}
+
+	keystorepath, err := keystoreDir(datadir)
+
+	kp, err := ed25519.NewKeypairFromSeed(key)
+	if err != nil {
+		return "", fmt.Errorf("could not generate ed25519 keypair from given string: %w", err)
+	}
+
+	fp, err := filepath.Abs(keystorepath + "/" + kp.PublicKey() + ".key")
+	if err != nil {
+		return "", fmt.Errorf("invalid filepath: %w", err)
+	}
+
+	file, err := os.OpenFile(filepath.Clean(fp), os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return "", fmt.Errorf("Unable to Open File: %w", err)
+	}
+
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Error("import private key: could not close keystore file")
+		}
+	}()
+
+	err = keystore.EncryptAndWriteToFile(file, kp, password)
+	if err != nil {
+		return "", fmt.Errorf("could not write key to file: %w", err)
+	}
+
+	log.Info("private key imported", "public key", kp.PublicKey(), "file", fp)
+	return fp, nil
 }
 
 //importPrivKey imports a private key into a keypair
@@ -202,7 +253,6 @@ func importPrivKey(ctx *cli.Context, keytype, datadir, key string, password []by
 
 	log.Info("private key imported", "address", kp.Address(), "file", fp)
 	return fp, nil
-
 }
 
 //importEthKey takes an ethereum keystore and converts it to our keystore format

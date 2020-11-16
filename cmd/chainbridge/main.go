@@ -54,6 +54,7 @@ var importFlags = []cli.Flag{
 	config.TONImportFlag,
 	config.EthereumImportFlag,
 	config.PrivateKeyFlag,
+	config.Ed25519Flag,
 	config.Sr25519Flag,
 	config.Secp256k1Flag,
 	config.PasswordFlag,
