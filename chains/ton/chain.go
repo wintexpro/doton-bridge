@@ -21,70 +21,73 @@ The writer recieves the message and creates a proposals on-chain. Once a proposa
 package ton
 
 import (
+	"math/big"
+
+	"github.com/ByKeks/chainbridge-utils/blockstore"
 	"github.com/ByKeks/chainbridge-utils/core"
+	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
+	"github.com/ByKeks/chainbridge-utils/keystore"
 	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
+	connection "github.com/ChainSafe/ChainBridge/connections/ton"
 	"github.com/ChainSafe/log15"
+	"github.com/radianceteam/ton-client-go/client"
 )
 
 // var _ core.Chain = &Chain{}
 
 // var _ Connection = &connection.Connection{}
 
-// type Connection interface {
-// 	Connect() error
-// 	Keypair() *secp256k1.Keypair
-// 	Opts() *bind.TransactOpts
-// 	CallOpts() *bind.CallOpts
-// 	LockAndUpdateOpts() error
-// 	UnlockOpts()
-// 	Client() *ethclient.Client
-// 	EnsureHasBytecode(address common.Address) error
-// 	LatestBlock() (*big.Int, error)
-// 	WaitForBlock(block *big.Int) error
-// 	Close()
-// }
+type Connection interface {
+	Connect() error
+	Keypair() *ed25519.Keypair
+	LockAndUpdateOpts() error
+	Client() *client.Client
+	LatestBlock() (*big.Int, error)
+	WaitForBlock(block *big.Int) error
+	Close()
+}
 
 type Chain struct {
-	cfg *core.ChainConfig // The config of the chain
-	// conn Connection        // The chains connection
-	// listener *listener         // The listener of this chain
+	cfg      *core.ChainConfig // The config of the chain
+	conn     Connection        // The chains connection
+	listener *listener         // The listener of this chain
 	// writer   *writer           // The writer of the chain
 	// stop chan<- int
 }
 
 // checkBlockstore queries the blockstore for the latest known block. If the latest block is
 // greater than cfg.startBlock, then cfg.startBlock is replaced with the latest known block.
-// func setupBlockstore(cfg *Config, kp *secp256k1.Keypair) (*blockstore.Blockstore, error) {
-// 	bs, err := blockstore.NewBlockstore(cfg.blockstorePath, cfg.id, kp.Address())
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func setupBlockstore(cfg *Config, kp *ed25519.Keypair) (*blockstore.Blockstore, error) {
+	bs, err := blockstore.NewBlockstore(cfg.blockstorePath, cfg.id, kp.Address())
+	if err != nil {
+		return nil, err
+	}
 
-// 	if !cfg.freshStart {
-// 		latestBlock, err := bs.TryLoadLatestBlock()
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	if !cfg.freshStart {
+		latestBlock, err := bs.TryLoadLatestBlock()
+		if err != nil {
+			return nil, err
+		}
 
-// 		if latestBlock.Cmp(cfg.startBlock) == 1 {
-// 			cfg.startBlock = latestBlock
-// 		}
-// 	}
+		if latestBlock.Cmp(cfg.startBlock) == 1 {
+			cfg.startBlock = latestBlock
+		}
+	}
 
-// 	return bs, nil
-// }
+	return bs, nil
+}
 
 func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr chan<- error, m *metrics.ChainMetrics) (*Chain, error) {
-	// cfg, err := parseChainConfig(chainCfg)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	cfg, err := parseChainConfig(chainCfg)
+	if err != nil {
+		return nil, err
+	}
 
-	// keystore.KeypairFromAddress(cfg.from, keystore.TonChain, cfg.keystorePath, chainCfg.Insecure)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// kp, _ := kpI.(*secp256k1.Keypair)
+	kpI, err := keystore.KeypairFromAddress(cfg.from, keystore.TonChain, cfg.keystorePath, chainCfg.Insecure)
+	if err != nil {
+		return nil, err
+	}
+	kp, _ := kpI.(*ed25519.Keypair)
 
 	// bs, err := setupBlockstore(cfg, kp)
 	// if err != nil {
@@ -92,31 +95,30 @@ func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr cha
 	// }
 
 	// stop := make(chan int)
-	// conn := connection.NewConnection(cfg.endpoint, cfg.http, kp, logger, cfg.gasLimit, cfg.maxGasPrice)
-	// err = conn.Connect()
-	// if err != nil {
-	// 	return nil, err
-	// }
+	conn := connection.NewConnection(cfg.endpoint, cfg.http, kp, logger)
+	err = conn.Connect()
+	if err != nil {
+		return nil, err
+	}
 
-	// if chainCfg.LatestBlock {
-	// 	curr, err := conn.LatestBlock()
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	cfg.startBlock = curr
-	// }
+	if chainCfg.LatestBlock {
+		curr, err := conn.LatestBlock()
+		if err != nil {
+			return nil, err
+		}
+		cfg.startBlock = curr
+	}
 
-	// listener := NewListener(conn, cfg, logger, bs, stop, sysErr, m)
-	// listener.setContracts(bridgeContract, erc20HandlerContract, erc721HandlerContract, genericHandlerContract)
+	listener := NewListener(conn)
 
 	// writer := NewWriter(conn, cfg, logger, stop, sysErr, m)
 	// writer.setContract(bridgeContract)
 
 	return &Chain{
-		cfg: chainCfg,
-		// conn: conn,
+		cfg:  chainCfg,
+		conn: conn,
 		// writer:   writer,
-		// listener: listener,
+		listener: listener,
 		// stop:     stop,
 	}, nil
 }

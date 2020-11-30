@@ -4,45 +4,85 @@
 package ton
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ByKeks/chainbridge-utils/core"
+	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
 	"github.com/ByKeks/chainbridge-utils/keystore"
 	"github.com/ByKeks/chainbridge-utils/msg"
+	log "github.com/ChainSafe/log15"
 )
 
-func TestChain_ListenerShutdownOnFailure(t *testing.T) {
+func TestTonChain(t *testing.T) {
 	cfg := &core.ChainConfig{
 		Id:             msg.ChainId(0),
 		Name:           "alice",
-		Endpoint:       "http://localhost",
-		From:           "0:841288ed3b55d9cdafa806807f02a0ae0c169aa5edfe88a789a6482429756a94",
+		Endpoint:       "http://net.ton.dev",
+		From:           "9284b50360b82e19d7e5a7a9f06ecaf243e3af6b2c5ce40f94f77c8eaa786043",
 		Insecure:       false,
-		KeystorePath:   "./keys",
+		KeystorePath:   "/Users/by-keks/workspace/projects/substrate/ChainBridge/keys",
 		BlockstorePath: "",
 		FreshStart:     true,
 		Opts:           map[string]string{},
+		LatestBlock:    true,
 	}
-	t.Logf("1 %v", cfg)
 
-	keyI, err := keystore.KeypairFromAddress(cfg.From, keystore.TonChain, cfg.KeystorePath, cfg.Insecure)
+	pswdStr := "123456"
+
+	os.Setenv(keystore.EnvPassword, pswdStr)
+	importTonPrivKey(cfg.KeystorePath, "action glow era all liquid critic achieve lawsuit era anger loud slight", []byte(pswdStr))
+
+	logger := log.Root().New("test", cfg.Name)
+
+	sysErr := make(chan error)
+	chain, err := InitializeChain(cfg, logger, sysErr, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf("keyI: %v", keyI)
+	blockNumber, err := chain.conn.LatestBlock()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// logger := log.Root().New("test", cfg.Name)
+	t.Logf("blockNumber: %s", blockNumber)
+}
 
-	// t.Logf("ChainId: %v", cfg.Id)
-	// t.Logf("Name: %v", cfg.Name)
-	// t.Logf("Endpoint: %v", cfg.Endpoint)
-	// t.Logf("From: %v", cfg.From)
-	// t.Logf("keystore type: %v", keystore.TonChain)
+func importTonPrivKey(keystorepath, key string, password []byte) (string, error) {
+	if password == nil {
+		password = keystore.GetPassword("Enter password to encrypt keystore file:")
+	}
 
-	// sysErr := make(chan error)
-	// _, err := InitializeChain(cfg, logger, sysErr, nil)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	kp, err := ed25519.NewKeypairFromSeed(key)
+	if err != nil {
+		return "", fmt.Errorf("could not generate ed25519 keypair from given string: %w", err)
+	}
+
+	fp, err := filepath.Abs(keystorepath + "/" + kp.PublicKey() + ".key")
+	if err != nil {
+		return "", fmt.Errorf("invalid filepath: %w", err)
+	}
+
+	file, err := os.OpenFile(filepath.Clean(fp), os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return "", fmt.Errorf("Unable to Open File: %w", err)
+	}
+
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Error("import private key: could not close keystore file")
+		}
+	}()
+
+	err = keystore.EncryptAndWriteToFile(file, kp, password)
+	if err != nil {
+		return "", fmt.Errorf("could not write key to file: %w", err)
+	}
+
+	log.Info("private key imported", "public key", kp.PublicKey(), "file", fp)
+	return fp, nil
 }

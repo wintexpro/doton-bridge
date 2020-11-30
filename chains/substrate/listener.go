@@ -1,4 +1,4 @@
-// Copyright 2020 ChainSafe Systems
+// Copyright 2020 Wintex
 // SPDX-License-Identifier: LGPL-3.0-only
 
 package substrate
