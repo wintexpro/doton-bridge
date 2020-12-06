@@ -12,18 +12,25 @@ import (
 	"github.com/ByKeks/chainbridge-utils/msg"
 )
 
+// Chain specific options
+var (
+	SenderOpt   = "sender"
+	ReceiverOpt = "receiver"
+)
+
 // Config encapsulates all necessary parameters in ethereum compatible forms
 type Config struct {
-	name           string      // Human-readable chain name
 	id             msg.ChainId // ChainID
+	name           string      // Human-readable chain name
 	endpoint       string      // url for rpc endpoint
 	from           string      // address of key to use
 	keystorePath   string      // Location of keyfiles
-	blockstorePath string
+	blockstorePath string      // Location of blockstore
+	contracts      map[string]string
 	freshStart     bool // Disables loading from blockstore at start
+	http           bool // Config for type of connection
 	gasLimit       *big.Int
 	maxGasPrice    *big.Int
-	http           bool // Config for type of connection
 	startBlock     *big.Int
 }
 
@@ -37,9 +44,24 @@ func parseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
 		from:           chainCfg.From,
 		keystorePath:   chainCfg.KeystorePath,
 		blockstorePath: chainCfg.BlockstorePath,
+		contracts:      make(map[string]string),
 		freshStart:     chainCfg.FreshStart,
 		http:           false,
 		startBlock:     big.NewInt(0),
+	}
+
+	if contract, ok := chainCfg.Opts[SenderOpt]; ok && contract != "" {
+		config.contracts["sender"] = contract
+		delete(chainCfg.Opts, SenderOpt)
+	} else {
+		return nil, fmt.Errorf("must provide opts.senderContract field for ton config")
+	}
+
+	if contract, ok := chainCfg.Opts[ReceiverOpt]; ok && contract != "" {
+		config.contracts["receiver"] = contract
+		delete(chainCfg.Opts, ReceiverOpt)
+	} else {
+		return nil, fmt.Errorf("must provide opts.receiverContract field for ton config")
 	}
 
 	if HTTP, ok := chainCfg.Opts["http"]; ok && HTTP == "true" {

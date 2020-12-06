@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
 	"strconv"
 
 	"github.com/ByKeks/chainbridge-utils/core"
@@ -20,6 +21,7 @@ import (
 	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/chains/ethereum"
 	"github.com/ChainSafe/ChainBridge/chains/substrate"
+	"github.com/ChainSafe/ChainBridge/chains/ton"
 	"github.com/ChainSafe/ChainBridge/config"
 	log "github.com/ChainSafe/log15"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -100,6 +102,10 @@ var accountCommand = cli.Command{
 	},
 }
 
+var (
+	Version = "0.0.1"
+)
+
 // init initializes CLI
 func init() {
 	app.Action = run
@@ -107,7 +113,7 @@ func init() {
 	app.Name = "chainbridge"
 	app.Usage = "ChainBridge"
 	app.Authors = []*cli.Author{{Name: "ChainSafe Systems 2019"}}
-	app.Version = "0.0.1"
+	app.Version = Version
 	app.EnableBashCompletion = true
 	app.Commands = []*cli.Command{
 		&accountCommand,
@@ -195,7 +201,7 @@ func run(ctx *cli.Context) error {
 		if chain.Type == "ethereum" {
 			newChain, err = ethereum.InitializeChain(chainConfig, logger, sysErr, m)
 		} else if chain.Type == "ton" {
-			// newChain, err = ton.InitializeChain(chainConfig, logger, sysErr, m)
+			newChain, err = ton.InitializeChain(chainConfig, logger, sysErr, m)
 		} else if chain.Type == "substrate" {
 			newChain, err = substrate.InitializeChain(chainConfig, logger, sysErr, m)
 		} else {

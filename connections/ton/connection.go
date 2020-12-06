@@ -19,8 +19,8 @@ import (
 var BlockRetryInterval = time.Second * 5
 
 type BlockType struct {
-	Number    int64 `json:"seq_no"`
-	CreatedAt int64 `json:"gen_utime"`
+	Number    uint64 `json:"seq_no"`
+	CreatedAt int64  `json:"gen_utime"`
 }
 
 type Connection struct {

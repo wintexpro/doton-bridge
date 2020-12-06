@@ -14,21 +14,26 @@ import (
 	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
 	"github.com/ByKeks/chainbridge-utils/keystore"
 	"github.com/ByKeks/chainbridge-utils/msg"
+	"github.com/ChainSafe/log15"
 	log "github.com/ChainSafe/log15"
 )
 
+var TestLogger = log15.New("chain", "test")
+
 func TestTonChain(t *testing.T) {
 	cfg := &core.ChainConfig{
-		Id:             msg.ChainId(0),
+		Id:             msg.ChainId(1),
 		Name:           "alice",
 		Endpoint:       "http://net.ton.dev",
 		From:           "9284b50360b82e19d7e5a7a9f06ecaf243e3af6b2c5ce40f94f77c8eaa786043",
 		Insecure:       false,
 		KeystorePath:   "/Users/by-keks/workspace/projects/substrate/ChainBridge/keys",
 		BlockstorePath: "",
-		FreshStart:     false,
+		FreshStart:     true,
 		Opts: map[string]string{
-			"startBlock": "1671051",
+			"startBlock": "1751455",
+			"sender":     "0:dee8cdbf9937431376dd7ab7ee93367c14c62acc24d1d558cdd01186cf45704d",
+			"receiver":   "0:c0c4627877c03b66d81d4d037dc696a322d63b6e14bea1e6fd39955734af6f5b",
 		},
 		LatestBlock: false,
 	}
@@ -45,6 +50,11 @@ func TestTonChain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	TestLogger.SetHandler(log15.LvlFilterHandler(log15.LvlError, TestLogger.GetHandler()))
+
+	r := core.NewRouter(TestLogger)
+	chain.SetRouter(r)
 
 	err = chain.Start()
 	if err != nil {

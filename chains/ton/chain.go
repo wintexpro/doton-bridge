@@ -90,10 +90,10 @@ func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<-
 	}
 	kp, _ := kpI.(*ed25519.Keypair)
 
-	// bs, err := setupBlockstore(cfg, kp)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	bs, err := setupBlockstore(cfg, kp)
+	if err != nil {
+		return nil, err
+	}
 
 	stop := make(chan int)
 	conn := connection.NewConnection(cfg.endpoint, cfg.http, kp, log)
@@ -107,22 +107,22 @@ func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<-
 		if err != nil {
 			return nil, err
 		}
-		cfg.startBlock = big.NewInt(curr.Number)
+		cfg.startBlock = big.NewInt(int64(curr.Number))
 	}
 
 	return &Chain{
 		cfg:      chainCfg,
 		conn:     conn,
 		writer:   NewWriter(conn, cfg, log, stop, sysErr, m),
-		listener: NewListener(conn, cfg, log, stop),
+		listener: NewListener(conn, bs, cfg, log, stop),
 		stop:     stop,
 	}, nil
 }
 
-// func (c *Chain) SetRouter(r *core.Router) {
-// 	r.Listen(c.cfg.Id, c.writer)
-// 	c.listener.setRouter(r)
-// }
+func (c *Chain) SetRouter(r *core.Router) {
+	r.Listen(c.cfg.Id, c.writer)
+	c.listener.setRouter(r)
+}
 
 func (c *Chain) Start() error {
 	err := c.listener.start()
@@ -130,12 +130,12 @@ func (c *Chain) Start() error {
 		return err
 	}
 
-	// 	err = c.writer.start()
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	err = c.writer.start()
+	if err != nil {
+		return err
+	}
 
-	// 	c.writer.log.Debug("Successfully started chain")
+	c.writer.log.Debug("Successfully started chain")
 	return nil
 }
 
@@ -147,14 +147,14 @@ func (c *Chain) Name() string {
 	return c.cfg.Name
 }
 
-// func (c *Chain) LatestBlock() metrics.LatestBlock {
-// 	return c.listener.latestBlock
-// }
+func (c *Chain) LatestBlock() metrics.LatestBlock {
+	return c.listener.latestBlock
+}
 
-// // Stop signals to any running routines to exit
-// func (c *Chain) Stop() {
-// 	close(c.stop)
-// 	if c.conn != nil {
-// 		c.conn.Close()
-// 	}
-// }
+// Stop signals to any running routines to exit
+func (c *Chain) Stop() {
+	close(c.stop)
+	if c.conn != nil {
+		c.conn.Close()
+	}
+}
