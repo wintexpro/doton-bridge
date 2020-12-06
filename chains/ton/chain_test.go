@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/ByKeks/chainbridge-utils/core"
 	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
@@ -25,9 +26,11 @@ func TestTonChain(t *testing.T) {
 		Insecure:       false,
 		KeystorePath:   "/Users/by-keks/workspace/projects/substrate/ChainBridge/keys",
 		BlockstorePath: "",
-		FreshStart:     true,
-		Opts:           map[string]string{},
-		LatestBlock:    true,
+		FreshStart:     false,
+		Opts: map[string]string{
+			"startBlock": "1671051",
+		},
+		LatestBlock: false,
 	}
 
 	pswdStr := "123456"
@@ -43,12 +46,14 @@ func TestTonChain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	blockNumber, err := chain.conn.LatestBlock()
+	err = chain.Start()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf("blockNumber: %s", blockNumber)
+	time.Sleep(time.Second * 20)
+
+	chain.conn.Client().Close()
 }
 
 func importTonPrivKey(keystorepath, key string, password []byte) (string, error) {

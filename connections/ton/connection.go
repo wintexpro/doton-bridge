@@ -19,7 +19,8 @@ import (
 var BlockRetryInterval = time.Second * 5
 
 type BlockType struct {
-	Number int64 `json:"seq_no"`
+	Number    int64 `json:"seq_no"`
+	CreatedAt int64 `json:"gen_utime"`
 }
 
 type Connection struct {
@@ -124,10 +125,10 @@ func (c *Connection) UnlockOpts() {
 }
 
 // LatestBlock returns the latest block from the current chain
-func (c *Connection) LatestBlock() (*big.Int, error) {
+func (c *Connection) LatestBlock() (*BlockType, error) {
 	params := client.ParamsOfQueryCollection{
 		Collection: "blocks",
-		Result:     "seq_no",
+		Result:     "seq_no gen_utime",
 		Limit:      null.Uint32From(1),
 		Filter:     json.RawMessage(`{"workchain_id":{"eq":-1}, "status":{"eq": 2}}`),
 		Order: []client.OrderBy{{
@@ -154,7 +155,7 @@ func (c *Connection) LatestBlock() (*big.Int, error) {
 
 	json.Unmarshal(s, &latestBlock)
 
-	return big.NewInt(latestBlock.Number), nil
+	return latestBlock, nil
 }
 
 // EnsureHasBytecode asserts if contract code exists at the specified address

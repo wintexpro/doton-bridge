@@ -28,6 +28,7 @@ import (
 	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
 	"github.com/ByKeks/chainbridge-utils/keystore"
 	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
+	"github.com/ByKeks/chainbridge-utils/msg"
 	connection "github.com/ChainSafe/ChainBridge/connections/ton"
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
@@ -35,14 +36,14 @@ import (
 
 // var _ core.Chain = &Chain{}
 
-// var _ Connection = &connection.Connection{}
+var _ Connection = &connection.Connection{}
 
 type Connection interface {
 	Connect() error
 	Keypair() *ed25519.Keypair
 	LockAndUpdateOpts() error
 	Client() *client.Client
-	LatestBlock() (*big.Int, error)
+	LatestBlock() (*connection.BlockType, error)
 	WaitForBlock(block *big.Int) error
 	Close()
 }
@@ -51,8 +52,8 @@ type Chain struct {
 	cfg      *core.ChainConfig // The config of the chain
 	conn     Connection        // The chains connection
 	listener *listener         // The listener of this chain
-	// writer   *writer           // The writer of the chain
-	// stop chan<- int
+	writer   *writer           // The writer of the chain
+	stop     chan<- int
 }
 
 // checkBlockstore queries the blockstore for the latest known block. If the latest block is
@@ -77,7 +78,7 @@ func setupBlockstore(cfg *Config, kp *ed25519.Keypair) (*blockstore.Blockstore, 
 	return bs, nil
 }
 
-func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr chan<- error, m *metrics.ChainMetrics) (*Chain, error) {
+func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<- error, m *metrics.ChainMetrics) (*Chain, error) {
 	cfg, err := parseChainConfig(chainCfg)
 	if err != nil {
 		return nil, err
@@ -94,8 +95,8 @@ func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr cha
 	// 	return nil, err
 	// }
 
-	// stop := make(chan int)
-	conn := connection.NewConnection(cfg.endpoint, cfg.http, kp, logger)
+	stop := make(chan int)
+	conn := connection.NewConnection(cfg.endpoint, cfg.http, kp, log)
 	err = conn.Connect()
 	if err != nil {
 		return nil, err
@@ -106,20 +107,15 @@ func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr cha
 		if err != nil {
 			return nil, err
 		}
-		cfg.startBlock = curr
+		cfg.startBlock = big.NewInt(curr.Number)
 	}
 
-	listener := NewListener(conn)
-
-	// writer := NewWriter(conn, cfg, logger, stop, sysErr, m)
-	// writer.setContract(bridgeContract)
-
 	return &Chain{
-		cfg:  chainCfg,
-		conn: conn,
-		// writer:   writer,
-		listener: listener,
-		// stop:     stop,
+		cfg:      chainCfg,
+		conn:     conn,
+		writer:   NewWriter(conn, cfg, log, stop, sysErr, m),
+		listener: NewListener(conn, cfg, log, stop),
+		stop:     stop,
 	}, nil
 }
 
@@ -128,28 +124,28 @@ func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr cha
 // 	c.listener.setRouter(r)
 // }
 
-// func (c *Chain) Start() error {
-// 	err := c.listener.start()
-// 	if err != nil {
-// 		return err
-// 	}
+func (c *Chain) Start() error {
+	err := c.listener.start()
+	if err != nil {
+		return err
+	}
 
-// 	err = c.writer.start()
-// 	if err != nil {
-// 		return err
-// 	}
+	// 	err = c.writer.start()
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-// 	c.writer.log.Debug("Successfully started chain")
-// 	return nil
-// }
+	// 	c.writer.log.Debug("Successfully started chain")
+	return nil
+}
 
-// func (c *Chain) Id() msg.ChainId {
-// 	return c.cfg.Id
-// }
+func (c *Chain) Id() msg.ChainId {
+	return c.cfg.Id
+}
 
-// func (c *Chain) Name() string {
-// 	return c.cfg.Name
-// }
+func (c *Chain) Name() string {
+	return c.cfg.Name
+}
 
 // func (c *Chain) LatestBlock() metrics.LatestBlock {
 // 	return c.listener.latestBlock
