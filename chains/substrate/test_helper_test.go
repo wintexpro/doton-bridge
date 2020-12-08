@@ -7,12 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ByKeks/chainbridge-utils/keystore"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	utils "github.com/ChainSafe/ChainBridge/shared/substrate"
 	"github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/wintexpro/chainbridge-utils/keystore"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 const TestEndpoint = "ws://127.0.0.1:9944"

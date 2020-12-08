@@ -4,7 +4,7 @@
 package chains
 
 import (
-	"github.com/ByKeks/chainbridge-utils/msg"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 type Router interface {

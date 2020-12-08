@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/keystore"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	utils "github.com/ChainSafe/ChainBridge/shared/substrate"
 	"github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/keystore"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 const TestSubEndpoint = "ws://localhost:9944"

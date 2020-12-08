@@ -11,8 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	ethChain "github.com/ChainSafe/ChainBridge/chains/ethereum"
 	subChain "github.com/ChainSafe/ChainBridge/chains/substrate"
 	eth "github.com/ChainSafe/ChainBridge/e2e/ethereum"
@@ -25,6 +23,8 @@ import (
 	log "github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 const EthAChainId = msg.ChainId(0)

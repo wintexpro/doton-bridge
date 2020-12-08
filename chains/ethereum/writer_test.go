@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	utils "github.com/ChainSafe/ChainBridge/shared/ethereum"
 	ethtest "github.com/ChainSafe/ChainBridge/shared/ethereum/testing"
@@ -18,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 func createWriters(t *testing.T, client *utils.Client, contracts *utils.DeployedContracts) (*writer, *writer, func(), func(), chan error, chan error) {

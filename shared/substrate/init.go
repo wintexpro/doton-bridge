@@ -4,8 +4,8 @@
 package utils
 
 import (
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 func InitializeChain(client *Client, relayers []types.AccountID, chains []msg.ChainId, resources map[msg.ResourceId]Method, threshold uint32) error {

@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/blockstore"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	"github.com/ChainSafe/ChainBridge/bindings/ERC20Handler"
 	"github.com/ChainSafe/ChainBridge/bindings/ERC721Handler"
@@ -21,6 +19,8 @@ import (
 	"github.com/ChainSafe/log15"
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/wintexpro/chainbridge-utils/blockstore"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 type MockRouter struct {

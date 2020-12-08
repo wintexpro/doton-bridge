@@ -15,10 +15,6 @@ import (
 
 	"strconv"
 
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/metrics/health"
-	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/chains/ethereum"
 	"github.com/ChainSafe/ChainBridge/chains/substrate"
 	"github.com/ChainSafe/ChainBridge/chains/ton"
@@ -26,6 +22,10 @@ import (
 	log "github.com/ChainSafe/log15"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/cli/v2"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/metrics/health"
+	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 var app = cli.NewApp()

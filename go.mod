@@ -3,7 +3,7 @@ module github.com/ChainSafe/ChainBridge
 go 1.15
 
 require (
-	github.com/ByKeks/chainbridge-utils v1.0.6
+	github.com/wintexpro/chainbridge-utils v1.0.6
 	github.com/ChainSafe/chainbridge-substrate-events v0.0.0-20200715141113-87198532025e
 	github.com/ChainSafe/log15 v1.0.0
 	github.com/aristanetworks/goarista v0.0.0-20200609010056-95bcf8053598 // indirect
@@ -19,7 +19,3 @@ require (
 	github.com/volatiletech/null v8.0.0+incompatible
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 )
-
-replace github.com/ByKeks/chainbridge-utils => ./../../go/src/github.com/ByKeks/chainbridge-utils
-
-replace github.com/ByKeks/chainbridge-utils/ed25519 => ./../../go/src/github.com/ByKeks/chainbridge-utils/ed25519

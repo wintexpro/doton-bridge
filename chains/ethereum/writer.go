@@ -4,11 +4,11 @@
 package ethereum
 
 import (
-	"github.com/ByKeks/chainbridge-utils/core"
-	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	"github.com/ChainSafe/log15"
+	"github.com/wintexpro/chainbridge-utils/core"
+	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 var _ core.Writer = &writer{}

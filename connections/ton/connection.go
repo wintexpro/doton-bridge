@@ -9,11 +9,11 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
 	"github.com/ChainSafe/log15"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/radianceteam/ton-client-go/client"
 	"github.com/volatiletech/null"
+	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 )
 
 var BlockRetryInterval = time.Second * 5

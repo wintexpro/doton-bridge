@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
-	"github.com/ByKeks/chainbridge-utils/keystore"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
 	log "github.com/ChainSafe/log15"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
+	"github.com/wintexpro/chainbridge-utils/keystore"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 var TestLogger = log15.New("chain", "test")

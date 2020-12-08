@@ -8,12 +8,12 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/blockstore"
-	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/chains"
 	"github.com/ChainSafe/ChainBridge/connections/ton"
 	"github.com/ChainSafe/log15"
+	"github.com/wintexpro/chainbridge-utils/blockstore"
+	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 type listener struct {

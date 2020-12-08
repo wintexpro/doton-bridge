@@ -24,12 +24,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ByKeks/chainbridge-utils/blockstore"
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/crypto/secp256k1"
-	"github.com/ByKeks/chainbridge-utils/keystore"
-	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	bridge "github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	erc20Handler "github.com/ChainSafe/ChainBridge/bindings/ERC20Handler"
 	erc721Handler "github.com/ChainSafe/ChainBridge/bindings/ERC721Handler"
@@ -39,6 +33,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/wintexpro/chainbridge-utils/blockstore"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/crypto/secp256k1"
+	"github.com/wintexpro/chainbridge-utils/keystore"
+	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 var _ core.Chain = &Chain{}

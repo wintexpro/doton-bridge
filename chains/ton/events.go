@@ -4,9 +4,9 @@
 package ton
 
 import (
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 type eventName string

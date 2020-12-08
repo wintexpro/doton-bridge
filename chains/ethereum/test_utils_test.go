@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/keystore"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	connection "github.com/ChainSafe/ChainBridge/connections/ethereum"
 	utils "github.com/ChainSafe/ChainBridge/shared/ethereum"
 	"github.com/ChainSafe/log15"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/wintexpro/chainbridge-utils/keystore"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 const TestEndpoint = "ws://localhost:8545"

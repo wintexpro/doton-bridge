@@ -7,10 +7,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ByKeks/chainbridge-utils/msg"
 	utils "github.com/ChainSafe/ChainBridge/shared/ethereum"
 	"github.com/ChainSafe/log15"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 func DeployMintApproveErc20(t *testing.T, client *utils.Client, erc20Handler common.Address, amount *big.Int) common.Address {

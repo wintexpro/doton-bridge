@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/msg"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 // Chain specific options

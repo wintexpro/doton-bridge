@@ -9,13 +9,13 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/blockstore"
-	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/chains"
 	utils "github.com/ChainSafe/ChainBridge/shared/substrate"
 	"github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/wintexpro/chainbridge-utils/blockstore"
+	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 type listener struct {

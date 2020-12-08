@@ -15,10 +15,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ByKeks/chainbridge-utils/crypto"
-	"github.com/ByKeks/chainbridge-utils/keystore"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
+	"github.com/wintexpro/chainbridge-utils/crypto"
+	"github.com/wintexpro/chainbridge-utils/keystore"
 )
 
 var testKeystoreDir = "./test_datadir/"

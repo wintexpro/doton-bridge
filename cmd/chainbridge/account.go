@@ -10,15 +10,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ByKeks/chainbridge-utils/crypto"
-	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
-	"github.com/ByKeks/chainbridge-utils/crypto/secp256k1"
-	"github.com/ByKeks/chainbridge-utils/crypto/sr25519"
-	"github.com/ByKeks/chainbridge-utils/keystore"
 	"github.com/ChainSafe/ChainBridge/config"
 	log "github.com/ChainSafe/log15"
 	gokeystore "github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/urfave/cli/v2"
+	"github.com/wintexpro/chainbridge-utils/crypto"
+	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
+	"github.com/wintexpro/chainbridge-utils/crypto/secp256k1"
+	"github.com/wintexpro/chainbridge-utils/crypto/sr25519"
+	"github.com/wintexpro/chainbridge-utils/keystore"
 )
 
 //dataHandler is a struct which wraps any extra data our CMD functions need that cannot be passed through parameters

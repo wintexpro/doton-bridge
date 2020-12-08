@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client"
 	"github.com/centrifuge/go-substrate-rpc-client/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 // Client is a container for all the components required to submit extrinsics

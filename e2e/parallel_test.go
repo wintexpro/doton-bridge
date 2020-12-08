@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/msg"
 	eth "github.com/ChainSafe/ChainBridge/e2e/ethereum"
 	ethutils "github.com/ChainSafe/ChainBridge/shared/ethereum"
 	ethtest "github.com/ChainSafe/ChainBridge/shared/ethereum/testing"
@@ -19,6 +18,7 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 // Random recipient

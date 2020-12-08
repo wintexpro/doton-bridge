@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/wintexpro/chainbridge-utils/crypto/secp256k1"
 )
 
 const DefaultGasLimit = 6721975

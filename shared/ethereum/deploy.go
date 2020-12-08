@@ -10,10 +10,10 @@ import (
 	"github.com/ChainSafe/ChainBridge/bindings/GenericHandler"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/ByKeks/chainbridge-utils/keystore"
 	bridge "github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	erc20Handler "github.com/ChainSafe/ChainBridge/bindings/ERC20Handler"
 	erc721Handler "github.com/ChainSafe/ChainBridge/bindings/ERC721Handler"
+	"github.com/wintexpro/chainbridge-utils/keystore"
 )
 
 var (

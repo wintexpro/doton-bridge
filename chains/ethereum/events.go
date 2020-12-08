@@ -4,8 +4,8 @@
 package ethereum
 
 import (
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 func (l *listener) handleErc20DepositedEvent(destId msg.ChainId, nonce msg.Nonce) (msg.Message, error) {

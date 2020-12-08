@@ -23,15 +23,15 @@ package ton
 import (
 	"math/big"
 
-	"github.com/ByKeks/chainbridge-utils/blockstore"
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/crypto/ed25519"
-	"github.com/ByKeks/chainbridge-utils/keystore"
-	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	connection "github.com/ChainSafe/ChainBridge/connections/ton"
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
+	"github.com/wintexpro/chainbridge-utils/blockstore"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
+	"github.com/wintexpro/chainbridge-utils/keystore"
+	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 // var _ core.Chain = &Chain{}

@@ -10,9 +10,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/blockstore"
-	metrics "github.com/ByKeks/chainbridge-utils/metrics/types"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	"github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	"github.com/ChainSafe/ChainBridge/bindings/ERC20Handler"
 	"github.com/ChainSafe/ChainBridge/bindings/ERC721Handler"
@@ -23,6 +20,9 @@ import (
 	eth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/wintexpro/chainbridge-utils/blockstore"
+	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 var BlockRetryInterval = time.Second * 5

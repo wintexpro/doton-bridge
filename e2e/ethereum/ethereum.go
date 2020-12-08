@@ -11,10 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/core"
-	"github.com/ByKeks/chainbridge-utils/crypto/secp256k1"
-	"github.com/ByKeks/chainbridge-utils/keystore"
-	"github.com/ByKeks/chainbridge-utils/msg"
 	bridge "github.com/ChainSafe/ChainBridge/bindings/Bridge"
 	"github.com/ChainSafe/ChainBridge/chains/ethereum"
 	utils "github.com/ChainSafe/ChainBridge/shared/ethereum"
@@ -26,6 +22,10 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/wintexpro/chainbridge-utils/core"
+	"github.com/wintexpro/chainbridge-utils/crypto/secp256k1"
+	"github.com/wintexpro/chainbridge-utils/keystore"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 var TestTimeout = time.Second * 30

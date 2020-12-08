@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ByKeks/chainbridge-utils/msg"
 	utils "github.com/ChainSafe/ChainBridge/shared/substrate"
 	"github.com/ChainSafe/log15"
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client"
 	"github.com/centrifuge/go-substrate-rpc-client/rpc/author"
 	"github.com/centrifuge/go-substrate-rpc-client/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 type Connection struct {

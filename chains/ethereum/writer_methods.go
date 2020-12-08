@@ -9,9 +9,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ByKeks/chainbridge-utils/msg"
 	utils "github.com/ChainSafe/ChainBridge/shared/ethereum"
 	log "github.com/ChainSafe/log15"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 // Number of blocks to wait for an finalization event
