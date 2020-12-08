@@ -4,12 +4,24 @@
 
 # Contents
 
+- [ChainBridge](#chainbridge)
+- [Contents](#contents)
 - [Getting Started](#getting-started)
 - [Installation](#installation)
+  - [Dependencies](#dependencies)
+  - [Building](#building)
+  - [Docker](#docker)
 - [Configuration](#configuration)
+    - [Ethereum Options](#ethereum-options)
+    - [Substrate Options](#substrate-options)
+  - [Blockstore](#blockstore)
+  - [Keystore](#keystore)
+  - [Metrics](#metrics)
 - [Chain Implementations](#chain-implementations)
+- [Docs](#docs)
 - [Testing](#testing)
-- [Simulations](#simulations)
+- [ChainSafe Security Policy](#chainsafe-security-policy)
+  - [Reporting a Security Bug](#reporting-a-security-bug)
 
 # Getting Started
 - Check out our [documentation](https://chainsafe.github.io/ChainBridge/).
