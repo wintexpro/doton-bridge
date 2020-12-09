@@ -21,13 +21,18 @@ import (
 var TestLogger = log15.New("chain", "test")
 
 func TestTonChain(t *testing.T) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	cfg := &core.ChainConfig{
 		Id:             msg.ChainId(1),
 		Name:           "alice",
 		Endpoint:       "http://net.ton.dev",
 		From:           "ebc77aae202a4f12237e10892f4fe0e44f8fb3dfc07008dcc12b37f8f70c1149",
 		Insecure:       false,
-		KeystorePath:   "/Users/by-keks/workspace/projects/substrate/ChainBridge/keys",
+		KeystorePath:   dir + "/../../keys",
 		BlockstorePath: "",
 		FreshStart:     true,
 		Opts: map[string]string{
