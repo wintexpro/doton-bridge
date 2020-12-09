@@ -25,7 +25,7 @@ func TestTonChain(t *testing.T) {
 		Id:             msg.ChainId(1),
 		Name:           "alice",
 		Endpoint:       "http://net.ton.dev",
-		From:           "9284b50360b82e19d7e5a7a9f06ecaf243e3af6b2c5ce40f94f77c8eaa786043",
+		From:           "ebc77aae202a4f12237e10892f4fe0e44f8fb3dfc07008dcc12b37f8f70c1149",
 		Insecure:       false,
 		KeystorePath:   "/Users/by-keks/workspace/projects/substrate/ChainBridge/keys",
 		BlockstorePath: "",
