@@ -4,6 +4,7 @@
 package substrate
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -53,7 +54,7 @@ func nonFungibleTransferHandler(evtI interface{}, log log15.Logger) (msg.Message
 		return msg.Message{}, fmt.Errorf("failed to cast EventNonFungibleTransfer type")
 	}
 
-	log.Info("Got non-fungible transfer event!", "destination", evt.Destination, "resourceId", evt.ResourceId)
+	log.Info("Got non-fungible transfer event!", "destination", evt.Destination, "resourceId", hex.EncodeToString(evt.ResourceId[:]))
 
 	return msg.NewNonFungibleTransfer(
 		0, // Unset
@@ -72,7 +73,7 @@ func genericTransferHandler(evtI interface{}, log log15.Logger) (msg.Message, er
 		return msg.Message{}, fmt.Errorf("failed to cast EventGenericTransfer type")
 	}
 
-	log.Info("Got generic transfer event!", "destination", evt.Destination, "resourceId", evt.ResourceId)
+	log.Info("Got generic transfer event!", "destination", evt.Destination, "resourceId", hex.EncodeToString(evt.ResourceId[:]))
 
 	return msg.NewGenericTransfer(
 		0, // Unset

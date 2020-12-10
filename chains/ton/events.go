@@ -39,7 +39,7 @@ func genericTransferHandler(body interface{}, log log15.Logger) (msg.Message, er
 		panic(err)
 	}
 
-	log.Info("Got generic transfer event!", "destination", msg.ChainId(1), "resourceId", genericResourceID)
+	log.Info("Got generic transfer event!", "destination", msg.ChainId(1), "resourceId", hex.EncodeToString(genericResourceID[:]))
 
 	return msg.NewGenericTransfer(
 		msg.ChainId(2), // Unset

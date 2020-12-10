@@ -5,6 +5,7 @@ package substrate
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -74,7 +75,7 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 
 		// If active submit call, otherwise skip it. Retry on failure.
 		if valid {
-			w.log.Info("Acknowledging proposal on chain", "nonce", prop.depositNonce, "source", prop.sourceId, "resource", fmt.Sprintf("%x", prop.resourceId), "method", prop.method)
+			w.log.Info("Acknowledging proposal on chain", "nonce", prop.depositNonce, "source", prop.sourceId, "resource", hex.EncodeToString(prop.resourceId[:]), "method", prop.method)
 
 			err = w.conn.SubmitTx(AcknowledgeProposal, prop.depositNonce, prop.sourceId, prop.resourceId, prop.call)
 			if err != nil && err.Error() == TerminatedError.Error() {
@@ -89,7 +90,7 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 			}
 			return true
 		} else {
-			w.log.Info("Ignoring proposal", "reason", reason, "nonce", prop.depositNonce, "source", prop.sourceId, "resource", prop.resourceId)
+			w.log.Info("Ignoring proposal", "reason", reason, "nonce", prop.depositNonce, "source", prop.sourceId, "resource", hex.EncodeToString(prop.resourceId[:]))
 			return true
 		}
 	}
