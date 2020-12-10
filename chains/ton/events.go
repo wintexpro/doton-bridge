@@ -20,15 +20,13 @@ var genericResourceID = [32]byte{
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 244, 75, 230, 77, 45, 232, 149, 69, 76, 52, 103, 2, 25, 40, 229, 94, 1,
 }
 
-var receiverABI = LoadAbi("Receiver")
-
 var Subscriptions = []struct {
 	name        eventName
 	handler     eventHandler
-	abi         client.Abi
+	abiName     string
 	contractKey string
 }{
-	{GenericTransfer, genericTransferHandler, receiverABI, "receiver"},
+	{GenericTransfer, genericTransferHandler, "Receiver", "receiver"},
 }
 
 func genericTransferHandler(body interface{}, log log15.Logger) (msg.Message, error) {

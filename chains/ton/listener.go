@@ -11,6 +11,7 @@ import (
 	"github.com/ChainSafe/ChainBridge/chains"
 	"github.com/ChainSafe/ChainBridge/connections/ton"
 	"github.com/ChainSafe/log15"
+	"github.com/radianceteam/ton-client-go/client"
 	"github.com/wintexpro/chainbridge-utils/blockstore"
 	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
 	"github.com/wintexpro/chainbridge-utils/msg"
@@ -24,6 +25,7 @@ type listener struct {
 	log         log15.Logger
 	router      chains.Router
 	stop        <-chan int
+	abi         map[string]client.Abi
 }
 
 // Frequency of polling for a new block
@@ -32,6 +34,12 @@ var BlockRetryInterval = time.Second * 5
 // var BlockRetryLimit = 5
 
 func NewListener(conn *ton.Connection, blockstore blockstore.Blockstorer, cfg *Config, log log15.Logger, stop <-chan int) *listener {
+	abi := make(map[string]client.Abi)
+
+	for _, subscription := range Subscriptions {
+		abi[subscription.abiName] = LoadAbi(cfg.abiPath, subscription.abiName)
+	}
+
 	return &listener{
 		cfg:         *cfg,
 		conn:        conn,
@@ -39,6 +47,7 @@ func NewListener(conn *ton.Connection, blockstore blockstore.Blockstorer, cfg *C
 		log:         log,
 		latestBlock: metrics.LatestBlock{LastUpdated: time.Now()},
 		stop:        stop,
+		abi:         abi,
 	}
 }
 
@@ -134,7 +143,7 @@ func (l *listener) processEvents(prevBlock, currentBlock *ton.BlockType) error {
 
 		// Handle founded messages
 		for _, message := range *messages {
-			body, err := DecodeMessageBody(l.conn.Client(), &message, subscription.abi)
+			body, err := DecodeMessageBody(l.conn.Client(), &message, l.abi[subscription.abiName])
 			if err != nil {
 				return err
 			}

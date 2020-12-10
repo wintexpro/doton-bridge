@@ -16,6 +16,7 @@ import (
 var (
 	SenderOpt   = "sender"
 	ReceiverOpt = "receiver"
+	AbiPath     = "abiPath"
 )
 
 // Config encapsulates all necessary parameters in ethereum compatible forms
@@ -26,6 +27,7 @@ type Config struct {
 	from           string      // address of key to use
 	keystorePath   string      // Location of keyfiles
 	blockstorePath string      // Location of blockstore
+	abiPath        string      // Location of abi files
 	contracts      map[string]string
 	freshStart     bool // Disables loading from blockstore at start
 	http           bool // Config for type of connection
@@ -48,6 +50,13 @@ func parseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
 		freshStart:     chainCfg.FreshStart,
 		http:           false,
 		startBlock:     big.NewInt(0),
+	}
+
+	if abiPath, ok := chainCfg.Opts[AbiPath]; ok && abiPath != "" {
+		config.abiPath = abiPath
+		delete(chainCfg.Opts, AbiPath)
+	} else {
+		return nil, fmt.Errorf("must provide opts.abiPath field for ton config")
 	}
 
 	if contract, ok := chainCfg.Opts[SenderOpt]; ok && contract != "" {

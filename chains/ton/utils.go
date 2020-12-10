@@ -17,8 +17,8 @@ import (
 
 type Message = map[string]interface{}
 
-func LoadAbi(name string) client.Abi {
-	content, err := ioutil.ReadFile("./contracts/" + name + ".abi.json")
+func LoadAbi(path, name string) client.Abi {
+	content, err := ioutil.ReadFile(path + "/" + name + ".abi.json")
 	if err != nil {
 		panic(err)
 	}
