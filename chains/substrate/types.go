@@ -144,19 +144,20 @@ func (w *writer) createGenericProposal(m msg.Message) (*proposal, error) {
 	call, err := types.NewCall(
 		&meta,
 		method,
+		types.U64(m.DepositNonce),
 		types.NewHash(m.Payload[0].([]byte)),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if w.extendCall {
-		eRID, err := types.EncodeToBytes(m.ResourceId)
-		if err != nil {
-			return nil, err
-		}
+	// if w.extendCall {
+	// 	eRID, err := types.EncodeToBytes(m.ResourceId)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		call.Args = append(call.Args, eRID...)
-	}
+	// 	call.Args = append(call.Args, eRID...)
+	// }
 	return &proposal{
 		depositNonce: types.U64(m.DepositNonce),
 		call:         call,

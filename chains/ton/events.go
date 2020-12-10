@@ -4,6 +4,8 @@
 package ton
 
 import (
+	"encoding/hex"
+
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
 	"github.com/wintexpro/chainbridge-utils/msg"
@@ -32,6 +34,11 @@ var Subscriptions = []struct {
 func genericTransferHandler(body interface{}, log log15.Logger) (msg.Message, error) {
 	data := body.(*client.DecodedMessageBody).Value.(map[string]interface{})["data"]
 
+	dataAsBytes, err := hex.DecodeString((data.(string))[2:])
+	if err != nil {
+		panic(err)
+	}
+
 	log.Info("Got generic transfer event!", "destination", msg.ChainId(1), "resourceId", genericResourceID)
 
 	return msg.NewGenericTransfer(
@@ -39,6 +46,6 @@ func genericTransferHandler(body interface{}, log log15.Logger) (msg.Message, er
 		msg.ChainId(1), // TODO: get from message body
 		msg.Nonce(1),   // TODO: get from message body
 		msg.ResourceId(genericResourceID),
-		[]byte(data.(string)),
+		dataAsBytes,
 	), nil
 }

@@ -8,6 +8,13 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 )
 
+type EventMessageCreated struct {
+	Phase       types.Phase
+	From        types.AccountID
+	BlockNumber types.U32
+	Msg         []types.Hash
+}
+
 type EventErc721Minted struct {
 	Phase   types.Phase
 	Owner   types.AccountID
@@ -126,6 +133,7 @@ type EventTreasuryMinting struct {
 type Events struct {
 	types.EventRecords
 	events.Events
+	Doton_MessageCreated             []EventMessageCreated                 //nolint:stylecheck,golint
 	Erc721_Minted                    []EventErc721Minted                   //nolint:stylecheck,golint
 	Erc721_Transferred               []EventErc721Transferred              //nolint:stylecheck,golint
 	Erc721_Burned                    []EventErc721Burned                   //nolint:stylecheck,golint
