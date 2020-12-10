@@ -37,7 +37,7 @@ func NewListener(conn *ton.Connection, blockstore blockstore.Blockstorer, cfg *C
 	abi := make(map[string]client.Abi)
 
 	for _, subscription := range Subscriptions {
-		abi[subscription.abiName] = LoadAbi(cfg.abiPath, subscription.abiName)
+		abi[subscription.abiName] = LoadAbi(cfg.contractsPath, subscription.abiName)
 	}
 
 	return &listener{

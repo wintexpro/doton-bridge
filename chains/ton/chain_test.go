@@ -36,10 +36,10 @@ func TestTonChain(t *testing.T) {
 		BlockstorePath: "",
 		FreshStart:     true,
 		Opts: map[string]string{
-			"abiPath":    dir + "/mocks/contracts",
-			"startBlock": "1751455",
-			"sender":     "0:dee8cdbf9937431376dd7ab7ee93367c14c62acc24d1d558cdd01186cf45704d",
-			"receiver":   "0:c0c4627877c03b66d81d4d037dc696a322d63b6e14bea1e6fd39955734af6f5b",
+			"contractsPath": dir + "/mocks/contracts",
+			"startBlock":    "1751455",
+			"sender":        "0:dee8cdbf9937431376dd7ab7ee93367c14c62acc24d1d558cdd01186cf45704d",
+			"receiver":      "0:c0c4627877c03b66d81d4d037dc696a322d63b6e14bea1e6fd39955734af6f5b",
 		},
 		LatestBlock: false,
 	}
