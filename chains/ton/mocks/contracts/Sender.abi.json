@@ -1,0 +1,29 @@
+{
+	"ABI version": 2,
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "sendData",
+			"inputs": [
+				{"name":"destination","type":"address"},
+				{"name":"bounce","type":"bool"},
+				{"name":"value","type":"uint128"},
+				{"name":"data","type":"uint256"},
+				{"name":"destinationChainId","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	]
+}

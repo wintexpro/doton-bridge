@@ -59,15 +59,8 @@ func parseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
 		return nil, fmt.Errorf("must provide opts.contractsPath field for ton config")
 	}
 
-	if contract, ok := chainCfg.Opts[SenderOpt]; ok && contract != "" {
-		config.contracts["sender"] = contract
-		delete(chainCfg.Opts, SenderOpt)
-	} else {
-		return nil, fmt.Errorf("must provide opts.senderContract field for ton config")
-	}
-
 	if contract, ok := chainCfg.Opts[ReceiverOpt]; ok && contract != "" {
-		config.contracts["receiver"] = contract
+		config.contracts[ReceiverOpt] = contract
 		delete(chainCfg.Opts, ReceiverOpt)
 	} else {
 		return nil, fmt.Errorf("must provide opts.receiverContract field for ton config")

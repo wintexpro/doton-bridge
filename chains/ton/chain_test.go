@@ -30,7 +30,7 @@ func TestTonChain(t *testing.T) {
 		Id:             msg.ChainId(1),
 		Name:           "alice",
 		Endpoint:       "http://net.ton.dev",
-		From:           "ebc77aae202a4f12237e10892f4fe0e44f8fb3dfc07008dcc12b37f8f70c1149",
+		From:           "0:ba2c987c13d6cbc220123b95bfbf364ba9d321c16e516a876a8f874201a19c59",
 		Insecure:       false,
 		KeystorePath:   dir + "/../../keys",
 		BlockstorePath: "",
@@ -38,7 +38,6 @@ func TestTonChain(t *testing.T) {
 		Opts: map[string]string{
 			"contractsPath": dir + "/mocks/contracts",
 			"startBlock":    "1751455",
-			"sender":        "0:dee8cdbf9937431376dd7ab7ee93367c14c62acc24d1d558cdd01186cf45704d",
 			"receiver":      "0:c0c4627877c03b66d81d4d037dc696a322d63b6e14bea1e6fd39955734af6f5b",
 		},
 		LatestBlock: false,
