@@ -15,14 +15,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/radianceteam/ton-client-go/client"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 	"github.com/wintexpro/chainbridge-utils/crypto"
+	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	"github.com/wintexpro/chainbridge-utils/keystore"
 )
 
 var testKeystoreDir = "./test_datadir/"
 var testPassword = []byte("1234")
+var testSeedPhrase = "action glow era all liquid critic achieve lawsuit era anger loud slight"
 
 // gethKeystore is a struct representation of the geth keystore file
 // used for testing so that we don't need to call geth to test imported ethereum keys
@@ -372,5 +375,45 @@ func TestListKeys(t *testing.T) {
 		if strings.Compare(key, filepath.Base(expected[i])) != 0 {
 			t.Fatalf("Fail: got %s expected %s", key, filepath.Base(expected[i]))
 		}
+	}
+}
+
+func TestDeriveAndImportTonKey(t *testing.T) {
+	keyfile, err := importTonPrivKey(testKeystoreDir, testSeedPhrase, testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keys, err := listKeys(testKeystoreDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(testKeystoreDir)
+
+	if len(keys) != 1 {
+		t.Fatal("fail")
+	}
+
+	if strings.Compare(keys[0], filepath.Base(keyfile)) != 0 {
+		t.Fatalf("Fail: got %s expected %s", keys[0], keyfile)
+	}
+}
+
+func TestDeriveSenderAddress(t *testing.T) {
+	kp, err := ed25519.NewKeypairFromSeed(testSeedPhrase)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	keys := client.KeyPair{
+		Public: kp.PublicKey(),
+		Secret: kp.SecretKey(),
+	}
+
+	address := deriveSenderAddress(keys)
+
+	if address != "0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f" {
+		t.Fatalf("address is not correct: %#v", kp.PublicKey())
 	}
 }

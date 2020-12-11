@@ -45,6 +45,7 @@ var generateFlags = []cli.Flag{
 	config.PasswordFlag,
 	config.Sr25519Flag,
 	config.Secp256k1Flag,
+	config.Ed25519Flag,
 	config.SubkeyNetworkFlag,
 }
 
@@ -53,6 +54,7 @@ var devFlags = []cli.Flag{
 }
 
 var importFlags = []cli.Flag{
+	config.SeedPhraseKeyFlag,
 	config.TONImportFlag,
 	config.EthereumImportFlag,
 	config.PrivateKeyFlag,

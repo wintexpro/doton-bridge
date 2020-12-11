@@ -4,6 +4,7 @@
 package ton
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -28,6 +29,15 @@ func LoadAbi(path, name string) client.Abi {
 	}
 
 	return abi
+}
+
+func LoadTvc(path, name string) string {
+	content, err := ioutil.ReadFile(path + "/" + name + ".tvc")
+	if err != nil {
+		panic(err)
+	}
+
+	return base64.StdEncoding.EncodeToString(content)
 }
 
 func GetBlock(c *client.Client, blockNumber *big.Int) (*connection.BlockType, error) {

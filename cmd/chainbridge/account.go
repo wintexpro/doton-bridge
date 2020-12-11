@@ -13,7 +13,9 @@ import (
 	"github.com/ChainSafe/ChainBridge/config"
 	log "github.com/ChainSafe/log15"
 	gokeystore "github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/radianceteam/ton-client-go/client"
 	"github.com/urfave/cli/v2"
+	"github.com/volatiletech/null"
 	"github.com/wintexpro/chainbridge-utils/crypto"
 	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	"github.com/wintexpro/chainbridge-utils/crypto/secp256k1"
@@ -56,6 +58,8 @@ func handleGenerateCmd(ctx *cli.Context, dHandler *dataHandler) error {
 		keytype = crypto.Sr25519Type
 	} else if flagtype := ctx.Bool(config.Secp256k1Flag.Name); flagtype {
 		keytype = crypto.Secp256k1Type
+	} else if flagtype := ctx.Bool(config.Ed25519Flag.Name); flagtype {
+		keytype = crypto.Ed25519Type
 	}
 
 	// check if --password is set
@@ -85,14 +89,14 @@ func handleImportCmd(ctx *cli.Context, dHandler *dataHandler) error {
 	}
 
 	if ctx.Bool(config.TONImportFlag.Name) {
-		if privkeyflag := ctx.String(config.PrivateKeyFlag.Name); privkeyflag != "" {
+		if seedPhraseKeyFlag := ctx.String(config.SeedPhraseKeyFlag.Name); seedPhraseKeyFlag != "" {
 			// check if --password is set
 			var password []byte = nil
 			if pwdflag := ctx.String(config.PasswordFlag.Name); pwdflag != "" {
 				password = []byte(pwdflag)
 			}
 
-			_, err = importTonPrivKey(ctx, dHandler.datadir, privkeyflag, password)
+			_, err = importTonPrivKey(dHandler.datadir, seedPhraseKeyFlag, password)
 		} else {
 			return fmt.Errorf("Must provide a key to import.")
 		}
@@ -103,6 +107,7 @@ func handleImportCmd(ctx *cli.Context, dHandler *dataHandler) error {
 			if pwdflag := ctx.String(config.PasswordFlag.Name); pwdflag != "" {
 				password = []byte(pwdflag)
 			}
+
 			_, err = importEthKey(keyimport, dHandler.datadir, password, nil)
 		} else {
 			return fmt.Errorf("Must provide a key to import.")
@@ -155,7 +160,55 @@ func getDataDir(ctx *cli.Context) (string, error) {
 	return "", fmt.Errorf("datadir flag not supplied")
 }
 
-func importTonPrivKey(ctx *cli.Context, datadir, key string, password []byte) (string, error) {
+func newClient() (*client.Client, error) {
+	conn, err := client.NewClient(client.Config{
+		Network: &client.NetworkConfig{ServerAddress: ""},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+func deriveSenderAddress(keys client.KeyPair) string {
+	conn, err := newClient()
+	if err != nil {
+		panic(err)
+	}
+
+	signer := client.Signer{
+		Type: client.KeysSignerType,
+		Keys: keys,
+	}
+
+	deploySet := client.DeploySet{
+		Tvc:         SenderTVC,
+		WorkchainID: null.NewInt32(0, true),
+	}
+
+	callSet := client.CallSet{
+		FunctionName: "constructor",
+	}
+
+	abi := client.Abi{Type: client.ContractAbiType}
+	if err = json.Unmarshal([]byte(SenderABI), &abi.Value); err != nil {
+		panic(err)
+	}
+
+	params := client.ParamsOfEncodeMessage{
+		Abi:       abi,
+		DeploySet: &deploySet,
+		CallSet:   &callSet,
+		Signer:    signer,
+	}
+
+	res, err := conn.AbiEncodeMessage(&params)
+
+	return res.Address
+}
+
+func importTonPrivKey(datadir, key string, password []byte) (string, error) {
 	if password == nil {
 		password = keystore.GetPassword("Enter password to encrypt keystore file:")
 	}
@@ -167,7 +220,12 @@ func importTonPrivKey(ctx *cli.Context, datadir, key string, password []byte) (s
 		return "", fmt.Errorf("could not generate ed25519 keypair from given string: %w", err)
 	}
 
-	fp, err := filepath.Abs(keystorepath + "/" + kp.PublicKey() + ".key")
+	kp.SetAddress(deriveSenderAddress(client.KeyPair{
+		Public: kp.PublicKey(),
+		Secret: kp.SecretKey(),
+	}))
+
+	fp, err := filepath.Abs(keystorepath + "/" + kp.Address() + ".key")
 	if err != nil {
 		return "", fmt.Errorf("invalid filepath: %w", err)
 	}
@@ -410,6 +468,16 @@ func generateKeypair(keytype, datadir string, password []byte, subNetwork string
 		if err != nil {
 			return "", fmt.Errorf("could not generate secp256k1 keypair: %w", err)
 		}
+	} else if keytype == crypto.Ed25519Type {
+		// generate ed25519 keys
+		kp, err = ed25519.GenerateKeypair()
+		if err != nil {
+			return "", fmt.Errorf("could not generate ed25519 keypair: %w", err)
+		}
+		kp.(*ed25519.Keypair).SetAddress(deriveSenderAddress(client.KeyPair{
+			Public: kp.PublicKey(),
+			Secret: kp.(*ed25519.Keypair).SecretKey(),
+		}))
 	} else {
 		return "", fmt.Errorf("invalid key type: %s", keytype)
 	}

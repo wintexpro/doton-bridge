@@ -40,11 +40,8 @@ var _ Connection = &connection.Connection{}
 
 type Connection interface {
 	Connect() error
-	Keypair() *ed25519.Keypair
-	LockAndUpdateOpts() error
 	Client() *client.Client
 	LatestBlock() (*connection.BlockType, error)
-	WaitForBlock(block *big.Int) error
 	Close()
 }
 
@@ -96,7 +93,7 @@ func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<-
 	}
 
 	stop := make(chan int)
-	conn := connection.NewConnection(cfg.endpoint, cfg.http, kp, log)
+	conn := connection.NewConnection(cfg.endpoint, cfg.http, log)
 	err = conn.Connect()
 	if err != nil {
 		return nil, err
