@@ -5,6 +5,7 @@ package ton
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -25,15 +26,16 @@ type listener struct {
 	log         log15.Logger
 	router      chains.Router
 	stop        <-chan int
+	sysErr      chan<- error
 	abi         map[string]client.Abi
 }
 
 // Frequency of polling for a new block
 var BlockRetryInterval = time.Second * 5
 
-// var BlockRetryLimit = 5
+var BlockRetryLimit = 5
 
-func NewListener(conn *ton.Connection, blockstore blockstore.Blockstorer, cfg *Config, log log15.Logger, stop <-chan int) *listener {
+func NewListener(conn *ton.Connection, blockstore blockstore.Blockstorer, cfg *Config, log log15.Logger, stop <-chan int, sysErr chan<- error) *listener {
 	abi := make(map[string]client.Abi)
 
 	for _, subscription := range Subscriptions {
@@ -47,6 +49,7 @@ func NewListener(conn *ton.Connection, blockstore blockstore.Blockstorer, cfg *C
 		log:         log,
 		latestBlock: metrics.LatestBlock{LastUpdated: time.Now()},
 		stop:        stop,
+		sysErr:      sysErr,
 		abi:         abi,
 	}
 }
@@ -83,15 +86,22 @@ func (l *listener) pollBlocks() error {
 		return err
 	}
 
-	// var retry = BlockRetryLimit
+	var retry = BlockRetryLimit
 
 	for {
 		select {
 		case <-l.stop:
 			return errors.New("terminated")
 		default:
+			// No more retries, goto next block
+			if retry == 0 {
+				l.sysErr <- fmt.Errorf("event polling retries exceeded (chain=%d, name=%s)", l.cfg.id, l.cfg.name)
+				return nil
+			}
+
 			currentBlock, err := GetBlock(l.conn.Client(), currentBlockNumber)
 			if err != nil {
+				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
 			}
@@ -99,12 +109,14 @@ func (l *listener) pollBlocks() error {
 			latestBlock, err := l.conn.LatestBlock()
 			if err != nil {
 				l.log.Error("Failed to query latest block", "block", currentBlock, "err", err)
+				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
 			}
 
 			if currentBlock.Number > latestBlock.Number {
 				l.log.Trace("Block not yet finalized", "target", currentBlock, "latest", latestBlock)
+				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
 			}
@@ -112,6 +124,7 @@ func (l *listener) pollBlocks() error {
 			err = l.processEvents(prevBlock, currentBlock)
 			if err != nil {
 				l.log.Error(err.Error(), "block", currentBlock, "err", err)
+				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
 			}

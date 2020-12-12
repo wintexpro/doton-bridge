@@ -21,14 +21,11 @@ The writer recieves the message and creates a proposals on-chain. Once a proposa
 package ton
 
 import (
-	"encoding/json"
-	"errors"
 	"math/big"
 
 	connection "github.com/ChainSafe/ChainBridge/connections/ton"
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
-	"github.com/volatiletech/null"
 	"github.com/wintexpro/chainbridge-utils/blockstore"
 	"github.com/wintexpro/chainbridge-utils/core"
 	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
@@ -111,78 +108,19 @@ func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<-
 		cfg.startBlock = big.NewInt(int64(curr.Number))
 	}
 
-	c := &Chain{
+	writer := NewWriter(conn, cfg, log, kp, stop, sysErr, m)
+	listener := NewListener(conn, bs, cfg, log, stop, sysErr)
+
+	err = writer.CheckAndDeploySender()
+
+	return (&Chain{
 		cfg:      chainCfg,
 		conn:     conn,
 		kp:       kp,
-		writer:   NewWriter(conn, cfg, log, stop, sysErr, m),
-		listener: NewListener(conn, bs, cfg, log, stop),
+		writer:   writer,
+		listener: listener,
 		stop:     stop,
-	}
-
-	err = c.checkAndDeploySender(cfg)
-
-	return c, err
-}
-
-func (c *Chain) checkAndDeploySender(cfg *Config) error {
-	keys := client.KeyPair{
-		Public: c.kp.PublicKey(),
-		Secret: c.kp.SecretKey(),
-	}
-
-	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: keys,
-	}
-
-	SenderABI := LoadAbi(cfg.contractsPath, "Sender")
-	SenderTVC := LoadTvc(cfg.contractsPath, "Sender")
-
-	deploySet := client.DeploySet{
-		Tvc:         SenderTVC,
-		WorkchainID: null.NewInt32(0, true),
-	}
-
-	callSet := client.CallSet{
-		FunctionName: "constructor",
-	}
-
-	paramsOfEncodeMsg := client.ParamsOfEncodeMessage{
-		Abi:       SenderABI,
-		DeploySet: &deploySet,
-		CallSet:   &callSet,
-		Signer:    signer,
-	}
-
-	encodedMessage, err := c.conn.Client().AbiEncodeMessage(&paramsOfEncodeMsg)
-	if err != nil {
-		return err
-	}
-
-	paramsOfQuery := client.ParamsOfQueryCollection{
-		Collection: "accounts",
-		Filter:     json.RawMessage(`{ "id": {"eq": "` + encodedMessage.Address + `"} }`),
-		Result:     "id balance",
-	}
-
-	res, err := c.conn.Client().NetQueryCollection(&paramsOfQuery)
-	if err != nil {
-		return err
-	}
-
-	if len(res.Result) == 0 {
-		return errors.New("Your sender address: " + encodedMessage.Address + " does not have balance for deploy the contract code")
-	}
-
-	paramsOfSendMessage := client.ParamsOfSendMessage{
-		Message: encodedMessage.Message,
-		Abi:     &SenderABI,
-	}
-
-	_, err = c.conn.Client().ProcessingSendMessage(&paramsOfSendMessage, MessageCallback)
-
-	return nil
+	}), err
 }
 
 func (c *Chain) SetRouter(r *core.Router) {

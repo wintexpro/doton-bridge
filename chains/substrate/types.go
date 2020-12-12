@@ -4,6 +4,7 @@
 package substrate
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/centrifuge/go-substrate-rpc-client/scale"
@@ -134,6 +135,33 @@ func (w *writer) createNonFungibleProposal(m msg.Message) (*proposal, error) {
 	}, nil
 }
 
+func (w *writer) createSimpleMessageProposal(m msg.Message) (*proposal, error) {
+	meta := w.conn.getMetadata()
+	method, err := w.resolveResourceId(m.ResourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("")
+
+	call, err := types.NewCall(
+		&meta,
+		method,
+		types.U64(m.DepositNonce),
+		m.Payload[0].([]byte),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &proposal{
+		call:         call,
+		sourceId:     types.U8(m.Source),
+		depositNonce: types.U64(m.DepositNonce),
+		resourceId:   types.NewBytes32(m.ResourceId),
+		method:       method,
+	}, nil
+}
+
 func (w *writer) createGenericProposal(m msg.Message) (*proposal, error) {
 	meta := w.conn.getMetadata()
 	method, err := w.resolveResourceId(m.ResourceId)
@@ -144,20 +172,19 @@ func (w *writer) createGenericProposal(m msg.Message) (*proposal, error) {
 	call, err := types.NewCall(
 		&meta,
 		method,
-		types.U64(m.DepositNonce),
 		types.NewHash(m.Payload[0].([]byte)),
 	)
 	if err != nil {
 		return nil, err
 	}
-	// if w.extendCall {
-	// 	eRID, err := types.EncodeToBytes(m.ResourceId)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+	if w.extendCall {
+		eRID, err := types.EncodeToBytes(m.ResourceId)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	call.Args = append(call.Args, eRID...)
-	// }
+		call.Args = append(call.Args, eRID...)
+	}
 	return &proposal{
 		depositNonce: types.U64(m.DepositNonce),
 		call:         call,

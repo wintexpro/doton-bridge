@@ -5,18 +5,19 @@
 		{
 			"name": "receiveData",
 			"inputs": [
-				{"name":"data","type":"uint256"}
+				{"name":"data","type":"uint256"},
+				{"name":"destinationChainId","type":"uint256"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "getMessageByNumber",
+			"name": "getNonceByChainId",
 			"inputs": [
-				{"name":"number","type":"uint256"}
+				{"name":"destinationChainId","type":"uint256"}
 			],
 			"outputs": [
-				{"name":"message","type":"uint256"}
+				{"name":"nonce","type":"uint256"}
 			]
 		},
 		{
@@ -33,8 +34,9 @@
 		{
 			"name": "DataReceived",
 			"inputs": [
-				{"name":"number","type":"uint256"},
-				{"name":"data","type":"uint256"}
+				{"name":"data","type":"uint256"},
+				{"name":"destinationChainId","type":"uint256"},
+				{"name":"nonce","type":"uint256"}
 			],
 			"outputs": [
 			]

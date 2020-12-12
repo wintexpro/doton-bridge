@@ -5,6 +5,8 @@ package ton
 
 import (
 	"encoding/hex"
+	"fmt"
+	"math/big"
 
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
@@ -14,10 +16,12 @@ import (
 type eventName string
 type eventHandler func(interface{}, log15.Logger) (msg.Message, error)
 
-const GenericTransfer eventName = "DataReceived"
+const SimpleMessage eventName = "DataReceived"
 
-var genericResourceID = [32]byte{
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 244, 75, 230, 77, 45, 232, 149, 69, 76, 52, 103, 2, 25, 40, 229, 94, 1,
+var SimpleMessageTransfer msg.TransferType = "SimpleMessageTransfer"
+
+var SimpleMessageResourceID = [32]byte{
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 83, 105, 109, 112, 108, 101, 77, 101, 115, 115, 97, 103, 101, 82, 101, 115, 111, 117, 114, 99, 101,
 }
 
 var Subscriptions = []struct {
@@ -26,24 +30,49 @@ var Subscriptions = []struct {
 	abiName     string
 	contractKey string
 }{
-	{GenericTransfer, genericTransferHandler, "Receiver", "receiver"},
+	{SimpleMessage, SimpleMessageTransferHandler, "Receiver", "receiver"},
 }
 
-func genericTransferHandler(body interface{}, log log15.Logger) (msg.Message, error) {
-	data := body.(*client.DecodedMessageBody).Value.(map[string]interface{})["data"]
-
-	dataAsBytes, err := hex.DecodeString((data.(string))[2:])
+func SimpleMessageTransferHandler(body interface{}, log log15.Logger) (msg.Message, error) {
+	chainIDAsBytes, err := hex.DecodeString(
+		((body.(*client.DecodedMessageBody).Value.(map[string]interface{})["destinationChainId"]).(string))[2:],
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	log.Info("Got generic transfer event!", "destination", msg.ChainId(1), "resourceId", hex.EncodeToString(genericResourceID[:]))
+	chainID := big.NewInt(0).SetBytes(chainIDAsBytes).Uint64()
 
-	return msg.NewGenericTransfer(
-		msg.ChainId(2), // Unset
-		msg.ChainId(1), // TODO: get from message body
-		msg.Nonce(1),   // TODO: get from message body
-		msg.ResourceId(genericResourceID),
-		dataAsBytes,
-	), nil
+	nonceAsBytes, err := hex.DecodeString(
+		((body.(*client.DecodedMessageBody).Value.(map[string]interface{})["nonce"]).(string))[2:],
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	nonce := big.NewInt(0).SetBytes(nonceAsBytes).Uint64()
+
+	data, err := hex.DecodeString(
+		(body.(*client.DecodedMessageBody).Value.(map[string]interface{})["data"].(string))[2:],
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Info("Got simple message transfer event!", "destination", chainID, "nonce", nonce, "resourceId", hex.EncodeToString(SimpleMessageResourceID[:]))
+
+	m := msg.Message{
+		Source:       msg.ChainId(0),
+		Destination:  msg.ChainId(chainID),
+		Type:         SimpleMessageTransfer,
+		DepositNonce: msg.Nonce(nonce),
+		ResourceId:   msg.ResourceId(SimpleMessageResourceID),
+		Payload: []interface{}{
+			data,
+		},
+	}
+
+	fmt.Printf("\n\n Message: %v \n\n", m)
+
+	return m, nil
 }

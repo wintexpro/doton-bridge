@@ -21,6 +21,7 @@ import (
 
 var _ core.Writer = &writer{}
 
+var SimpleMessageTransfer msg.TransferType = "SimpleMessageTransfer"
 var AcknowledgeProposal utils.Method = utils.BridgePalletName + ".acknowledge_proposal"
 var TerminatedError = errors.New("terminated")
 
@@ -54,6 +55,8 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 		prop, err = w.createNonFungibleProposal(m)
 	case msg.GenericTransfer:
 		prop, err = w.createGenericProposal(m)
+	case SimpleMessageTransfer:
+		prop, err = w.createSimpleMessageProposal(m)
 	default:
 		w.sysErr <- fmt.Errorf("unrecognized message type received (chain=%d, name=%s)", m.Destination, w.conn.name)
 		return false
