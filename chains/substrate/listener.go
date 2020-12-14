@@ -228,6 +228,12 @@ func (l *listener) handleEvents(evts utils.Events) {
 			l.submitMessage(l.subscriptions[GenericTransfer](evt, l.log))
 		}
 	}
+	if l.subscriptions[MessageReceived] != nil {
+		for _, evt := range evts.Doton_MessageReceived {
+			l.log.Trace("Handling MessageReceived event")
+			l.submitMessage(l.subscriptions[MessageReceived](evt, l.log))
+		}
+	}
 
 	if len(evts.System_CodeUpdated) > 0 {
 		l.log.Trace("Received CodeUpdated event")

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
@@ -20,13 +19,6 @@ import (
 
 var _ core.Writer = &writer{}
 
-type sendDataInput struct {
-	Destination string   `json:"destination"`
-	Bounce      bool     `json:"bounce"`
-	Data        string   `json:"data"`
-	Value       *big.Int `json:"value"`
-}
-
 type writer struct {
 	cfg     Config
 	conn    Connection
@@ -35,10 +27,15 @@ type writer struct {
 	stop    <-chan int
 	sysErr  chan<- error // Reports fatal error to core
 	metrics *metrics.ChainMetrics
+	abi     map[string]client.Abi
 }
 
 // NewWriter creates and returns writer
 func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypair, stop <-chan int, sysErr chan<- error, m *metrics.ChainMetrics) *writer {
+	senderABI := LoadAbi(cfg.contractsPath, "Sender")
+	abi := make(map[string]client.Abi)
+	abi["Sender"] = senderABI
+
 	return &writer{
 		cfg:     *cfg,
 		conn:    conn,
@@ -47,12 +44,8 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 		stop:    stop,
 		sysErr:  sysErr,
 		metrics: m,
+		abi:     abi,
 	}
-}
-
-func (w *writer) start() error {
-	w.log.Debug("Starting ton writer...")
-	return nil
 }
 
 func MessageCallback(event *client.ProcessingEvent) {
@@ -63,6 +56,9 @@ func MessageCallback(event *client.ProcessingEvent) {
 // A bool is returned to indicate failure/success, this should be ignored except for within tests.
 func (w *writer) ResolveMessage(m msg.Message) bool {
 	w.log.Info("Attempting to resolve message", "type", m.Type, "src", m.Source, "dst", m.Destination, "nonce", m.DepositNonce, "rId", m.ResourceId.Hex())
+
+	// w.abi["Sender"]
+
 	return false
 }
 

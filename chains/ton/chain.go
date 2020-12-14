@@ -134,11 +134,6 @@ func (c *Chain) Start() error {
 		return err
 	}
 
-	err = c.writer.start()
-	if err != nil {
-		return err
-	}
-
 	c.writer.log.Debug("Successfully started chain")
 	return nil
 }

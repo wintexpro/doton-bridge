@@ -4,7 +4,6 @@
 package substrate
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/centrifuge/go-substrate-rpc-client/scale"
@@ -141,8 +140,6 @@ func (w *writer) createSimpleMessageProposal(m msg.Message) (*proposal, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("")
 
 	call, err := types.NewCall(
 		&meta,

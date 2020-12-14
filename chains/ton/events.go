@@ -5,7 +5,6 @@ package ton
 
 import (
 	"encoding/hex"
-	"fmt"
 	"math/big"
 
 	"github.com/ChainSafe/log15"
@@ -33,9 +32,9 @@ var Subscriptions = []struct {
 	{SimpleMessage, SimpleMessageTransferHandler, "Receiver", "receiver"},
 }
 
-func SimpleMessageTransferHandler(body interface{}, log log15.Logger) (msg.Message, error) {
+func SimpleMessageTransferHandler(evtI interface{}, log log15.Logger) (msg.Message, error) {
 	chainIDAsBytes, err := hex.DecodeString(
-		((body.(*client.DecodedMessageBody).Value.(map[string]interface{})["destinationChainId"]).(string))[2:],
+		((evtI.(*client.DecodedMessageBody).Value.(map[string]interface{})["destinationChainId"]).(string))[2:],
 	)
 	if err != nil {
 		panic(err)
@@ -44,7 +43,7 @@ func SimpleMessageTransferHandler(body interface{}, log log15.Logger) (msg.Messa
 	chainID := big.NewInt(0).SetBytes(chainIDAsBytes).Uint64()
 
 	nonceAsBytes, err := hex.DecodeString(
-		((body.(*client.DecodedMessageBody).Value.(map[string]interface{})["nonce"]).(string))[2:],
+		((evtI.(*client.DecodedMessageBody).Value.(map[string]interface{})["nonce"]).(string))[2:],
 	)
 	if err != nil {
 		panic(err)
@@ -53,7 +52,7 @@ func SimpleMessageTransferHandler(body interface{}, log log15.Logger) (msg.Messa
 	nonce := big.NewInt(0).SetBytes(nonceAsBytes).Uint64()
 
 	data, err := hex.DecodeString(
-		(body.(*client.DecodedMessageBody).Value.(map[string]interface{})["data"].(string))[2:],
+		(evtI.(*client.DecodedMessageBody).Value.(map[string]interface{})["data"].(string))[2:],
 	)
 	if err != nil {
 		panic(err)
@@ -71,8 +70,6 @@ func SimpleMessageTransferHandler(body interface{}, log log15.Logger) (msg.Messa
 			data,
 		},
 	}
-
-	fmt.Printf("\n\n Message: %v \n\n", m)
 
 	return m, nil
 }
