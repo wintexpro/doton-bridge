@@ -12,9 +12,12 @@ pub trait Trait: system::Trait {
 
 ## Events
 
-To easily distinguish different transfer types we should define three event types:
+To easily distinguish different transfer types we should define event types for each:
 
 ```rust
+/// SimpleMessageTransfer is for relaying simple message (dest_id, nonce, resource_id, metadata)
+SimpleMessageTransfer(ChainId, DepositNonce, ResourceId, Text)
+
 /// FungibleTransfer is for relaying fungibles (dest_id, nonce, resource_id, amount, recipient, metadata)
 FungibleTransfer(ChainId, DepositNonce, ResourceId, U256, Vec<u8>)
 
@@ -51,7 +54,8 @@ A bridge origin check (implementing `EnsureOrigin`) should also be provided. Oth
 
 The pallet should support dispatching of arbitrary calls as the result of successful proposal. Resource IDs should be mapped to specific calls to define their behaviour. Relayers will need to resolve resource IDs to calls in order to submit a proposal. The pallet should provide a mapping of resource IDs to method names that can be updated by the admin.
 
-Compatible calls are restrained to the following signature to allow relayers to understand how to construct the calls: 
+Compatible calls are restrained to the following signature to allow relayers to understand how to construct the calls:
+- SimpleMessage: `Call(nonce: u64, message: Vec<u8>)`
 - Fungible: `Call(origin, recipient: AccountId, amount: u128)`
 - Non-Fungible: `Call(origin, recipient: AccountId, tokenId: U256, metadata: Vec<u8>)`
 - Generic: `Call(origin, data: Vec<u8>)`

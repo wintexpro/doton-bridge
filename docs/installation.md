@@ -9,9 +9,7 @@
 - [Subkey](https://github.com/paritytech/substrate): 
 Used for substrate key management. Only required if connecting to a substrate chain.
 
-```
-make install-subkey
-```
+- [TON-SDK](https://github.com/tonlabs/TON-SDK):  `export CGO_LDFLAGS="-L/.../TON-SDK/target/release/deps/ -lton_client"`
 
 ### Building from Source
 

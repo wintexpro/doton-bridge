@@ -27,12 +27,14 @@ The commands can be used to manage keys in the local keystore. You can view avai
 --password value  Password used to encrypt the keystore. Used with --generate, --import, or --unlock
 --sr25519         Specify account/key type as sr25519. (default: false)
 --secp256k1       Specify account/key type as secp256k1. (default: false)
+--ed25519         Specify account/key type as ed25519. (default: false)
 --network value   Specify the network to use for the address encoding (substrate/polkadot/centrifuge) (default: substrate)
 ```
 
 #### `chainbridge accounts import`
 ```
---ethereum          Import an existing ethereum keystore, such as from geth. (default: false)
+--seedphrase value  Derive keys from a seed phrase and import them into a keystore.
+--ton               Import an existing ton keystore. (default: false)
 --privateKey value  Import a hex representation of a private key into a keystore.
 --sr25519           Specify account/key type as sr25519. (default: false)
 --secp256k1         Specify account/key type as secp256k1. (default: false)

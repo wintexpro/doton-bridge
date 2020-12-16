@@ -13,15 +13,7 @@ ChainBridge is a modular multi-directional blockchain bridge to allow data and v
 
 ### Chain ID
 
-Each chain has a unique 8-bit identifier. We presently define the following chain IDs (subject to change):
-
-| ID | Chain |
-| - | - |
-| 0 | ETH Mainnet |
-| 1 | ETC Mainnet |
-| 2 | Centrifuge Network |
-| 3 | Aragon Chain |
-| .. | .. |
+Each chain has a unique 8-bit identifier. We presently define the following chain IDs (subject to change)
 
 ### Deposit Nonce
 
@@ -47,12 +39,20 @@ In a effort to balance the goals of allowing simple integration and proving gene
 
 |Event|Description|
 |-----|-----------|
+|SimpleMessageTransfer| Transfer of simple text message |
 |FungibleTransfer| Transfer of fungible assets |
 |NonFungibleTransfer| Transfer of non-fungible assets |
 |GenericTransfer| Transfer of arbitrary data |
 
 
 All transfers contain a source chain, destination chain, deposit nonce, resource ID and transfer-specific parameters.
+
+To date DOTON support only SimpleMessage transfer type
+
+### SimpleMessage
+|Field|Type|Description|
+|----|----|-----------|
+| Message | variable sized bytes | The string converted into a byte array |
 
 ### Fungible
 |Field|Type|Description|

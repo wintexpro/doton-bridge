@@ -5,7 +5,7 @@ A chain configurations take this form:
 ```
 {
     "name": "freeTON",                  // Human-readable name
-    "type": "ton",                      // Chain type (eg. "ton", "ethereum" or "substrate")
+    "type": "ton",                      // Chain type (eg. "ton" or "substrate")
     "id": "0",                          // Chain ID
     "endpoint": "ws://<host>:<port>",   // Node endpoint
     "from": "0:164d61e...",             // On-chain address of relayer
@@ -51,9 +51,12 @@ ChainBridge requires keys to sign and submit transactions, and to identify each 
 
 To use secure keys, see `chainbridge accounts --help`. The keystore password can be supplied with the `KEYSTORE_PASSWORD` environment variable.
 
-To import external ton keys, such as those generated with tonos-cli, use `chainbridge accounts import --ton /path/to/key.json`.
+To import external ton keys, such as those generated with tonos-cli, use `chainbridge accounts import --ton /path/to/key.json`
 
-<!-- // TODO: дописать эту часть -->
+or
+
+`chainbridge accounts import --ton --seedphrase "action glow era all liquid critic achieve lawsuit era anger loud slight"`
+
 To import private keys as keystores, use `chainbridge account import --privateKey key`.
 
 For testing purposes, chainbridge provides 5 test keys. The can be used with `--testkey <name>`, where `name` is one of `Alice`, `Bob`, `Charlie`, `Dave`, or `Eve`. 
