@@ -1,6 +1,10 @@
-# Installation```
+# Installation
 
-## Dependencies
+## Relay Node
+
+### Dependencies
+
+- [go 1.15](https://golang.org/dl/)
 
 - [Subkey](https://github.com/paritytech/substrate): 
 Used for substrate key management. Only required if connecting to a substrate chain.
@@ -9,34 +13,39 @@ Used for substrate key management. Only required if connecting to a substrate ch
 make install-subkey
 ```
 
-
-## Building from Source
+### Building from Source
 
 To build `chainbridge` in `./build`.
 ```
-make build
+$ make build
 ```
 
 **or**
 
-Use`go install` to add `chainbridge` to your GOBIN.
+Use `go install` to add `chainbridge` to your GOBIN.
 
 ```
-make install
+$ make install
 ```
 
-## Docker
+## Substrate Doton Node
 
-The official ChainBridge Docker image can be found [here](https://hub.docker.com/r/chainsafe/chainbridge).
+### Dependencies
 
-To build the Docker image locally run: 
+- [Rust Developer Environment](https://substrate.dev/docs/en/knowledgebase/getting-started/)
 
-```
-docker build -t chainsafe/chainbridge .
-```
-
-To start ChainBridge:
+- Rust Nightly Toolchain
 
 ```
-docker run -v ./config.json:/config.json chainsafe/chainbridge
+$ rustup install nightly-2020-10-01
+$ rustup default nightly-2020-10-01
+$ rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
 ```
+
+### Building from Source
+
+```
+$ git clone https://github.com/wintexpro/doton-substrate-chain.git
+$ cargo build --release
+```
+
