@@ -11,11 +11,11 @@ import (
 	"path/filepath"
 
 	"github.com/ChainSafe/ChainBridge/config"
+	utils "github.com/ChainSafe/ChainBridge/shared/ton"
 	log "github.com/ChainSafe/log15"
 	gokeystore "github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/radianceteam/ton-client-go/client"
 	"github.com/urfave/cli/v2"
-	"github.com/volatiletech/null"
 	"github.com/wintexpro/chainbridge-utils/crypto"
 	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	"github.com/wintexpro/chainbridge-utils/crypto/secp256k1"
@@ -89,14 +89,21 @@ func handleImportCmd(ctx *cli.Context, dHandler *dataHandler) error {
 	}
 
 	if ctx.Bool(config.TONImportFlag.Name) {
-		if seedPhraseKeyFlag := ctx.String(config.SeedPhraseKeyFlag.Name); seedPhraseKeyFlag != "" {
-			// check if --password is set
-			var password []byte = nil
-			if pwdflag := ctx.String(config.PasswordFlag.Name); pwdflag != "" {
-				password = []byte(pwdflag)
-			}
+		// check if --password is set
+		var password []byte = nil
+		if pwdflag := ctx.String(config.PasswordFlag.Name); pwdflag != "" {
+			password = []byte(pwdflag)
+		}
 
-			_, err = importTonPrivKey(dHandler.datadir, seedPhraseKeyFlag, password)
+		keystorepath, err := keystoreDir(dHandler.datadir)
+		if err != nil {
+			return err
+		}
+
+		if seedPhraseKeyFlag := ctx.String(config.SeedPhraseKeyFlag.Name); seedPhraseKeyFlag != "" {
+			_, err = utils.ImportTonPrivKey(keystorepath, seedPhraseKeyFlag, password)
+		} else if keyimport := ctx.Args().First(); keyimport != "" {
+			_, err = utils.ImportTonKeysFromFile(keystorepath, keyimport, password)
 		} else {
 			return fmt.Errorf("Must provide a key to import.")
 		}
@@ -158,97 +165,6 @@ func getDataDir(ctx *cli.Context) (string, error) {
 		return datadir, nil
 	}
 	return "", fmt.Errorf("datadir flag not supplied")
-}
-
-func newClient() (*client.Client, error) {
-	conn, err := client.NewClient(client.Config{
-		Network: &client.NetworkConfig{ServerAddress: ""},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return conn, nil
-}
-
-func deriveSenderAddress(keys client.KeyPair) string {
-	conn, err := newClient()
-	if err != nil {
-		panic(err)
-	}
-
-	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: keys,
-	}
-
-	deploySet := client.DeploySet{
-		Tvc:         SenderTVC,
-		WorkchainID: null.NewInt32(0, true),
-	}
-
-	callSet := client.CallSet{
-		FunctionName: "constructor",
-	}
-
-	abi := client.Abi{Type: client.ContractAbiType}
-	if err = json.Unmarshal([]byte(SenderABI), &abi.Value); err != nil {
-		panic(err)
-	}
-
-	params := client.ParamsOfEncodeMessage{
-		Abi:       abi,
-		DeploySet: &deploySet,
-		CallSet:   &callSet,
-		Signer:    signer,
-	}
-
-	res, err := conn.AbiEncodeMessage(&params)
-
-	return res.Address
-}
-
-func importTonPrivKey(datadir, key string, password []byte) (string, error) {
-	if password == nil {
-		password = keystore.GetPassword("Enter password to encrypt keystore file:")
-	}
-
-	keystorepath, err := keystoreDir(datadir)
-
-	kp, err := ed25519.NewKeypairFromSeed(key)
-	if err != nil {
-		return "", fmt.Errorf("could not generate ed25519 keypair from given string: %w", err)
-	}
-
-	kp.SetAddress(deriveSenderAddress(client.KeyPair{
-		Public: kp.PublicKey(),
-		Secret: kp.SecretKey(),
-	}))
-
-	fp, err := filepath.Abs(keystorepath + "/" + kp.Address() + ".key")
-	if err != nil {
-		return "", fmt.Errorf("invalid filepath: %w", err)
-	}
-
-	file, err := os.OpenFile(filepath.Clean(fp), os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return "", fmt.Errorf("Unable to Open File: %w", err)
-	}
-
-	defer func() {
-		err = file.Close()
-		if err != nil {
-			log.Error("import private key: could not close keystore file")
-		}
-	}()
-
-	err = keystore.EncryptAndWriteToFile(file, kp, password)
-	if err != nil {
-		return "", fmt.Errorf("could not write key to file: %w", err)
-	}
-
-	log.Info("private key imported", "public key", kp.PublicKey(), "file", fp)
-	return fp, nil
 }
 
 //importPrivKey imports a private key into a keypair
@@ -474,7 +390,7 @@ func generateKeypair(keytype, datadir string, password []byte, subNetwork string
 		if err != nil {
 			return "", fmt.Errorf("could not generate ed25519 keypair: %w", err)
 		}
-		kp.(*ed25519.Keypair).SetAddress(deriveSenderAddress(client.KeyPair{
+		kp.(*ed25519.Keypair).SetAddress(utils.DeriveSenderAddress(client.KeyPair{
 			Public: kp.PublicKey(),
 			Secret: kp.(*ed25519.Keypair).SecretKey(),
 		}))

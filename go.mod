@@ -16,6 +16,6 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/urfave/cli/v2 v2.2.0
 	github.com/volatiletech/null v8.0.0+incompatible
-	github.com/wintexpro/chainbridge-utils v1.1.2
+	github.com/wintexpro/chainbridge-utils v1.1.3
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 )

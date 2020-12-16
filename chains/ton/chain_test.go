@@ -4,16 +4,14 @@
 package ton
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
+	utils "github.com/ChainSafe/ChainBridge/shared/ton"
 	"github.com/ChainSafe/log15"
 	log "github.com/ChainSafe/log15"
 	"github.com/wintexpro/chainbridge-utils/core"
-	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	"github.com/wintexpro/chainbridge-utils/keystore"
 	"github.com/wintexpro/chainbridge-utils/msg"
 )
@@ -46,7 +44,7 @@ func TestTonChain(t *testing.T) {
 	pswdStr := "123456"
 
 	os.Setenv(keystore.EnvPassword, pswdStr)
-	importTonPrivKey(cfg.KeystorePath, "action glow era all liquid critic achieve lawsuit era anger loud slight", []byte(pswdStr))
+	utils.ImportTonPrivKey(cfg.KeystorePath, "action glow era all liquid critic achieve lawsuit era anger loud slight", []byte(pswdStr))
 
 	logger := log.Root().New("test", cfg.Name)
 
@@ -69,40 +67,4 @@ func TestTonChain(t *testing.T) {
 	time.Sleep(time.Second * 20)
 
 	chain.conn.Client().Close()
-}
-
-func importTonPrivKey(keystorepath, key string, password []byte) (string, error) {
-	if password == nil {
-		password = keystore.GetPassword("Enter password to encrypt keystore file:")
-	}
-
-	kp, err := ed25519.NewKeypairFromSeed(key)
-	if err != nil {
-		return "", fmt.Errorf("could not generate ed25519 keypair from given string: %w", err)
-	}
-
-	fp, err := filepath.Abs(keystorepath + "/" + kp.PublicKey() + ".key")
-	if err != nil {
-		return "", fmt.Errorf("invalid filepath: %w", err)
-	}
-
-	file, err := os.OpenFile(filepath.Clean(fp), os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return "", fmt.Errorf("Unable to Open File: %w", err)
-	}
-
-	defer func() {
-		err = file.Close()
-		if err != nil {
-			log.Error("import private key: could not close keystore file")
-		}
-	}()
-
-	err = keystore.EncryptAndWriteToFile(file, kp, password)
-	if err != nil {
-		return "", fmt.Errorf("could not write key to file: %w", err)
-	}
-
-	log.Info("private key imported", "public key", kp.PublicKey(), "file", fp)
-	return fp, nil
 }
