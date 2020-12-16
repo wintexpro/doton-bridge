@@ -17,7 +17,7 @@ type EventMessageReceived struct {
 	Topics      []types.Hash
 }
 
-type EventMessageCreated struct {
+type EventSimpleMessageTransfer struct {
 	Phase   types.Phase
 	From    types.AccountID
 	Message []types.Hash
@@ -143,7 +143,7 @@ type Events struct {
 	types.EventRecords
 	events.Events
 	Doton_MessageReceived            []EventMessageReceived                //nolint:stylecheck,golint
-	Doton_MessageCreated             []EventMessageCreated                 //nolint:stylecheck,golint
+	Doton_SimpleMessageTransfer      []EventSimpleMessageTransfer          //nolint:stylecheck,golint
 	Erc721_Minted                    []EventErc721Minted                   //nolint:stylecheck,golint
 	Erc721_Transferred               []EventErc721Transferred              //nolint:stylecheck,golint
 	Erc721_Burned                    []EventErc721Burned                   //nolint:stylecheck,golint
