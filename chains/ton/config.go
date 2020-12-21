@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/prometheus/common/log"
 	"github.com/wintexpro/chainbridge-utils/core"
 	"github.com/wintexpro/chainbridge-utils/msg"
 )
@@ -17,6 +18,7 @@ var (
 	SenderOpt     = "sender"
 	ReceiverOpt   = "receiver"
 	ContractsPath = "contractsPath"
+	WorkchainID   = "workchainID"
 )
 
 // Config encapsulates all necessary parameters in ethereum compatible forms
@@ -28,11 +30,10 @@ type Config struct {
 	keystorePath   string      // Location of keyfiles
 	blockstorePath string      // Location of blockstore
 	contractsPath  string      // Location of abi files
+	workchainID    string
 	contracts      map[string]string
 	freshStart     bool // Disables loading from blockstore at start
 	http           bool // Config for type of connection
-	gasLimit       *big.Int
-	maxGasPrice    *big.Int
 	startBlock     *big.Int
 }
 
@@ -50,6 +51,14 @@ func parseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
 		freshStart:     chainCfg.FreshStart,
 		http:           false,
 		startBlock:     big.NewInt(0),
+		workchainID:    "0",
+	}
+
+	if workchainID, ok := chainCfg.Opts[WorkchainID]; ok && workchainID != "" {
+		config.workchainID = workchainID
+		delete(chainCfg.Opts, WorkchainID)
+	} else {
+		log.Info("Workchain ID value set to the default: 0")
 	}
 
 	if contractsPath, ok := chainCfg.Opts[ContractsPath]; ok && contractsPath != "" {

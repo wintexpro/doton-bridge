@@ -28,13 +28,19 @@ type writer struct {
 	sysErr  chan<- error // Reports fatal error to core
 	metrics *metrics.ChainMetrics
 	abi     map[string]client.Abi
+	tvc     map[string]string
 }
 
 // NewWriter creates and returns writer
 func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypair, stop <-chan int, sysErr chan<- error, m *metrics.ChainMetrics) *writer {
 	senderABI := LoadAbi(cfg.contractsPath, "Sender")
+	senderTVC := LoadTvc(cfg.contractsPath, "Sender")
+
 	abi := make(map[string]client.Abi)
 	abi["Sender"] = senderABI
+
+	tvc := make(map[string]string)
+	tvc["Sender"] = senderTVC
 
 	return &writer{
 		cfg:     *cfg,
@@ -45,6 +51,7 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 		sysErr:  sysErr,
 		metrics: m,
 		abi:     abi,
+		tvc:     tvc,
 	}
 }
 
@@ -73,11 +80,8 @@ func (w *writer) CheckAndDeploySender() error {
 		Keys: keys,
 	}
 
-	SenderABI := LoadAbi(w.cfg.contractsPath, "Sender")
-	SenderTVC := LoadTvc(w.cfg.contractsPath, "Sender")
-
 	deploySet := client.DeploySet{
-		Tvc:         SenderTVC,
+		Tvc:         w.tvc["Sender"],
 		WorkchainID: null.NewInt32(0, true),
 	}
 
@@ -86,7 +90,7 @@ func (w *writer) CheckAndDeploySender() error {
 	}
 
 	paramsOfEncodeMsg := client.ParamsOfEncodeMessage{
-		Abi:       SenderABI,
+		Abi:       w.abi["Sender"],
 		DeploySet: &deploySet,
 		CallSet:   &callSet,
 		Signer:    signer,
@@ -112,9 +116,11 @@ func (w *writer) CheckAndDeploySender() error {
 		return errors.New("Your sender address: " + encodedMessage.Address + " does not have balance for deploy the contract code")
 	}
 
+	senderAbi := w.abi["Sender"]
+
 	paramsOfSendMessage := client.ParamsOfSendMessage{
 		Message: encodedMessage.Message,
-		Abi:     &SenderABI,
+		Abi:     &senderAbi,
 	}
 
 	_, err = w.conn.Client().ProcessingSendMessage(&paramsOfSendMessage, MessageCallback)
