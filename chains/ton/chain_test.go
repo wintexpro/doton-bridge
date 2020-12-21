@@ -37,6 +37,7 @@ func TestTonChain(t *testing.T) {
 			"contractsPath": dir + "/mocks/contracts",
 			"receiver":      "0:5a1921e4c0ec016f6be00917e06adbf06af2a26acc860af7d989f9a754f2ae89",
 			"startBlock":    "1866972",
+			"workchainID":   "-1",
 		},
 		LatestBlock: false,
 	}
