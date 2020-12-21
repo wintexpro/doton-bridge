@@ -40,16 +40,18 @@ func LoadTvc(path, name string) string {
 	return base64.StdEncoding.EncodeToString(content)
 }
 
-func GetBlock(c *client.Client, blockNumber *big.Int) (*connection.BlockType, error) {
+func GetBlock(c *client.Client, blockNumber *big.Int, workchainID string) (*connection.BlockType, error) {
+	filter := json.RawMessage(`{
+		"workchain_id":{"eq":` + workchainID + `},
+		"status":{"eq": 2},
+		"seq_no":{"eq": ` + blockNumber.String() + `}
+	}`)
+
 	params := client.ParamsOfQueryCollection{
 		Collection: "blocks",
 		Result:     "seq_no gen_utime",
 		Limit:      null.Uint32From(1),
-		Filter: json.RawMessage(`{
-			"workchain_id":{"eq":-1},
-			"status":{"eq": 2},
-			"seq_no":{"eq": ` + blockNumber.String() + `}
-		}`),
+		Filter:     filter,
 		Order: []client.OrderBy{{
 			Path:      "seq_no",
 			Direction: client.DescSortDirection,
@@ -63,7 +65,7 @@ func GetBlock(c *client.Client, blockNumber *big.Int) (*connection.BlockType, er
 	}
 
 	if len(res.Result) <= 0 {
-		return nil, errors.New("No blocks found")
+		return nil, errors.New("No blocks found: " + string(filter))
 	}
 
 	currentBlock := &connection.BlockType{}

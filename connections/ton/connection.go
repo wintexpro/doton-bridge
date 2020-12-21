@@ -21,21 +21,22 @@ type BlockType struct {
 }
 
 type Connection struct {
-	endpoint string
-	http     bool
-	conn     *client.Client
-	nonce    uint64
-	log      log15.Logger
-	stop     chan int // All routines should exit when this channel is closed
+	workchainID string
+	endpoint    string
+	http        bool
+	conn        *client.Client
+	log         log15.Logger
+	stop        chan int // All routines should exit when this channel is closed
 }
 
 // NewConnection returns an uninitialized connection, must call Connection.Connect() before using.
-func NewConnection(endpoint string, http bool, log log15.Logger) *Connection {
+func NewConnection(endpoint string, http bool, workchainID string, log log15.Logger) *Connection {
 	return &Connection{
-		endpoint: endpoint,
-		http:     http,
-		log:      log,
-		stop:     make(chan int),
+		workchainID: workchainID,
+		endpoint:    endpoint,
+		http:        http,
+		log:         log,
+		stop:        make(chan int),
 	}
 }
 
@@ -65,7 +66,10 @@ func (c *Connection) LatestBlock() (*BlockType, error) {
 		Collection: "blocks",
 		Result:     "seq_no gen_utime",
 		Limit:      null.Uint32From(1),
-		Filter:     json.RawMessage(`{"workchain_id":{"eq":-1}, "status":{"eq": 2}}`),
+		Filter: json.RawMessage(`{
+			"workchain_id":{"eq":` + c.workchainID + `},
+			"status":{"eq": 2}
+		}`),
 		Order: []client.OrderBy{{
 			Path:      "seq_no",
 			Direction: client.DescSortDirection,

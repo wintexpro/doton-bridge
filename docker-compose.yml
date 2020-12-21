@@ -1,16 +1,24 @@
-# Copyright 2020 ChainSafe Systems
+# Copyright 2020 Wintex
 # SPDX-License-Identifier: LGPL-3.0-only
 
 version: '3'
 services:
-  bridge:
-    build:
-      context: .
-    container_name: bridge
+  ton-chain:
+    image: tonlabs/local-node
+    container_name: doton-ton-chain
     environment:
-      - KEYSTORE_PASSWORD=password
-    command: --config /config/config.json
-    volumes:
-      - ./config:/config
-      - ./keys:/keys/
-    network_mode: host
+      - USER_AGREEMENT=yes
+    networks:
+      - default
+    ports:
+      - "80:80"
+
+  sub-chain:
+    image: wintex/doton-substrate-chain
+    container_name: doton-sub-chain
+    command: doton-substrate-chain --dev --ws-external --rpc-external --prometheus-external
+    networks:
+      - default
+    ports:
+      - "9944:9944"
+      - "9615:9615"

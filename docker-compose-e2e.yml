@@ -1,23 +1,24 @@
-# Copyright 2020 ChainSafe Systems
+# Copyright 2020 Wintex
 # SPDX-License-Identifier: LGPL-3.0-only
 
 version: '3'
 services:
-  geth1:
-    image: "chainsafe/chainbridge-geth:20200505131100-5586a65"
-    container_name: geth1
+  ton-chain:
+    image: tonlabs/local-node
+    container_name: doton-ton-chain
+    environment:
+      - USER_AGREEMENT=yes
+    networks:
+      - default
     ports:
-    - "8545:8545"
-
-  geth2:
-    image: "chainsafe/chainbridge-geth:20200505131100-5586a65"
-    container_name: geth2
-    ports:
-    - "8546:8545"
+      - "80:80"
 
   sub-chain:
-    image: "chainsafe/chainbridge-substrate-chain:v1.3.0"
-    container_name: sub-chain
-    command: chainbridge-substrate-chain --dev --alice --ws-external --rpc-external
+    image: wintex/doton-substrate-chain
+    container_name: doton-sub-chain
+    command: doton-substrate-chain --dev --ws-external --rpc-external --prometheus-external
+    networks:
+      - default
     ports:
-    - "9944:9944"
+      - "9944:9944"
+      - "9615:9615"

@@ -33,7 +33,7 @@ type listener struct {
 // Frequency of polling for a new block
 var BlockRetryInterval = time.Second * 5
 
-var BlockRetryLimit = 5
+var BlockRetryLimit = 10
 
 func NewListener(conn *ton.Connection, blockstore blockstore.Blockstorer, cfg *Config, log log15.Logger, stop <-chan int, sysErr chan<- error) *listener {
 	abi := make(map[string]client.Abi)
@@ -80,7 +80,7 @@ func (l *listener) pollBlocks() error {
 	var prevBlockNumber *big.Int
 	prevBlockNumber = new(big.Int)
 
-	prevBlock, err := GetBlock(l.conn.Client(), prevBlockNumber.Sub(l.cfg.startBlock, big.NewInt(1)))
+	prevBlock, err := GetBlock(l.conn.Client(), prevBlockNumber.Sub(l.cfg.startBlock, big.NewInt(1)), l.cfg.workchainID)
 
 	if err != nil {
 		return err
@@ -99,8 +99,9 @@ func (l *listener) pollBlocks() error {
 				return nil
 			}
 
-			currentBlock, err := GetBlock(l.conn.Client(), currentBlockNumber)
+			currentBlock, err := GetBlock(l.conn.Client(), currentBlockNumber, l.cfg.workchainID)
 			if err != nil {
+				l.log.Error("Failed to query current block", "block", currentBlock, "err", err)
 				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
@@ -108,7 +109,7 @@ func (l *listener) pollBlocks() error {
 
 			latestBlock, err := l.conn.LatestBlock()
 			if err != nil {
-				l.log.Error("Failed to query latest block", "block", currentBlock, "err", err)
+				l.log.Error("Failed to query latest block", "block", latestBlock, "err", err)
 				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
