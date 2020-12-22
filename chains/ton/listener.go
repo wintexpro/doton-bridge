@@ -107,6 +107,8 @@ func (l *listener) pollBlocks() error {
 				continue
 			}
 
+			l.log.Debug("Block: " + currentBlockNumber.String() + " is being processed")
+
 			latestBlock, err := l.conn.LatestBlock()
 			if err != nil {
 				l.log.Error("Failed to query latest block", "block", latestBlock, "err", err)
@@ -138,11 +140,12 @@ func (l *listener) pollBlocks() error {
 
 			prevBlock = currentBlock
 
+			l.log.Debug("Block: " + currentBlockNumber.String() + " is done")
+
 			currentBlockNumber.Add(currentBlockNumber, big.NewInt(1))
 			l.latestBlock.Height = big.NewInt(int64(currentBlock.Number))
 			l.latestBlock.LastUpdated = time.Now()
-
-			time.Sleep(time.Second)
+			retry = BlockRetryLimit
 		}
 	}
 }
@@ -162,7 +165,7 @@ func (l *listener) processEvents(prevBlock, currentBlock *ton.BlockType) error {
 				return err
 			}
 
-			l.submitMessage(subscription.handler(body, l.log))
+			l.submitMessage(subscription.handler(message, body, l.log))
 		}
 	}
 

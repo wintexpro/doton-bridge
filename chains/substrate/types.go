@@ -4,12 +4,19 @@
 package substrate
 
 import (
+	"encoding/json"
+	"fmt"
 	"math/big"
 
 	"github.com/centrifuge/go-substrate-rpc-client/scale"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/wintexpro/chainbridge-utils/msg"
 )
+
+type SimpleMessagePayload struct {
+	From    string `json:"from"`
+	Message string `json:"message"`
+}
 
 type voteState struct {
 	VotesFor     []types.AccountID
@@ -141,11 +148,20 @@ func (w *writer) createSimpleMessageProposal(m msg.Message) (*proposal, error) {
 		return nil, err
 	}
 
+	payload := SimpleMessagePayload{}
+	fmt.Printf("\n\nPayload: %s\n\n", string(m.Payload[0].([]byte)))
+
+	json.Unmarshal(m.Payload[0].([]byte), &payload)
+
+	fmt.Printf("\n\nFrom: %s\n\n", payload.From)
+	fmt.Printf("\n\nMessage: %s\n\n", payload.Message)
+
 	call, err := types.NewCall(
 		&meta,
 		method,
+		payload.From,
 		types.U64(m.DepositNonce),
-		m.Payload[0].([]byte),
+		[]byte(payload.Message),
 	)
 	if err != nil {
 		return nil, err

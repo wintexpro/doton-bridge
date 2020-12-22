@@ -5,6 +5,7 @@ package ton
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"math/big"
 
 	"github.com/ChainSafe/log15"
@@ -13,7 +14,12 @@ import (
 )
 
 type eventName string
-type eventHandler func(interface{}, log15.Logger) (msg.Message, error)
+type eventHandler func(map[string]interface{}, interface{}, log15.Logger) (msg.Message, error)
+
+type SimpleMessagePayload struct {
+	From    string `json:"from"`
+	Message string `json:"message"`
+}
 
 const SimpleMessage eventName = "DataReceived"
 
@@ -32,9 +38,9 @@ var Subscriptions = []struct {
 	{SimpleMessage, SimpleMessageTransferHandler, "Receiver", "receiver"},
 }
 
-func SimpleMessageTransferHandler(evtI interface{}, log log15.Logger) (msg.Message, error) {
+func SimpleMessageTransferHandler(message map[string]interface{}, body interface{}, log log15.Logger) (msg.Message, error) {
 	chainIDAsBytes, err := hex.DecodeString(
-		((evtI.(*client.DecodedMessageBody).Value.(map[string]interface{})["destinationChainId"]).(string))[2:],
+		((body.(*client.DecodedMessageBody).Value.(map[string]interface{})["destinationChainId"]).(string))[2:],
 	)
 	if err != nil {
 		panic(err)
@@ -43,7 +49,7 @@ func SimpleMessageTransferHandler(evtI interface{}, log log15.Logger) (msg.Messa
 	chainID := big.NewInt(0).SetBytes(chainIDAsBytes).Uint64()
 
 	nonceAsBytes, err := hex.DecodeString(
-		((evtI.(*client.DecodedMessageBody).Value.(map[string]interface{})["nonce"]).(string))[2:],
+		((body.(*client.DecodedMessageBody).Value.(map[string]interface{})["nonce"]).(string))[2:],
 	)
 	if err != nil {
 		panic(err)
@@ -52,8 +58,18 @@ func SimpleMessageTransferHandler(evtI interface{}, log log15.Logger) (msg.Messa
 	nonce := big.NewInt(0).SetBytes(nonceAsBytes).Uint64()
 
 	data, err := hex.DecodeString(
-		(evtI.(*client.DecodedMessageBody).Value.(map[string]interface{})["data"].(string))[2:],
+		(body.(*client.DecodedMessageBody).Value.(map[string]interface{})["data"].(string))[2:],
 	)
+	if err != nil {
+		panic(err)
+	}
+
+	payload := SimpleMessagePayload{
+		From:    message["src"].(string),
+		Message: string(data),
+	}
+
+	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +83,7 @@ func SimpleMessageTransferHandler(evtI interface{}, log log15.Logger) (msg.Messa
 		DepositNonce: msg.Nonce(nonce),
 		ResourceId:   msg.ResourceId(SimpleMessageResourceID),
 		Payload: []interface{}{
-			data,
+			[]byte(payloadJSON),
 		},
 	}
 

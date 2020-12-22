@@ -95,7 +95,7 @@ func GetMessage(c *client.Client, address string, prevBlock, currentBlock *conne
 
 	params := client.ParamsOfQueryCollection{
 		Collection: "messages",
-		Result:     "id status created_at body",
+		Result:     "id status created_at body src",
 		Filter: json.RawMessage(`{
 			"status": { "eq": 5 },
 			"src": { "eq": "` + address + `" },

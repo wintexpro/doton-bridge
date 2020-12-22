@@ -113,6 +113,8 @@ func (l *listener) pollBlocks() error {
 				return nil
 			}
 
+			l.log.Debug("Block: " + fmt.Sprint(currentBlock) + " is being processed")
+
 			// Get finalized block hash
 			finalizedHash, err := l.conn.api.RPC.Chain.GetFinalizedHead()
 			if err != nil {
@@ -171,6 +173,8 @@ func (l *listener) pollBlocks() error {
 				l.metrics.BlocksProcessed.Inc()
 				l.metrics.LatestProcessedBlock.Set(float64(currentBlock))
 			}
+
+			l.log.Debug("Block: " + fmt.Sprint(currentBlock) + " is done")
 
 			currentBlock++
 			l.latestBlock.Height = big.NewInt(0).SetUint64(currentBlock)
