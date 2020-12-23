@@ -101,7 +101,7 @@ func (l *listener) pollBlocks() error {
 
 			currentBlock, err := GetBlock(l.conn.Client(), currentBlockNumber, l.cfg.workchainID)
 			if err != nil {
-				l.log.Error("Failed to query current block", "block", currentBlock, "err", err)
+				l.log.Debug("Failed to query current block", "block", currentBlock, "err", err)
 				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
