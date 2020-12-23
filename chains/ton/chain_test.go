@@ -28,7 +28,7 @@ func TestTonChain(t *testing.T) {
 		Id:             msg.ChainId(1),
 		Name:           "alice",
 		Endpoint:       "http://net.ton.dev",
-		From:           "0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f",
+		From:           "0:df22eba0b48020b70efa7a6e9d6360ed1dc20877250947470cc1289b14c9cc1e",
 		Insecure:       false,
 		KeystorePath:   dir + "/../../keys",
 		BlockstorePath: "",
@@ -45,7 +45,7 @@ func TestTonChain(t *testing.T) {
 	pswdStr := "123456"
 
 	os.Setenv(keystore.EnvPassword, pswdStr)
-	utils.ImportTonPrivKey(cfg.KeystorePath, "action glow era all liquid critic achieve lawsuit era anger loud slight", []byte(pswdStr))
+	utils.ImportTonPrivKey(cfg.KeystorePath, cfg.Opts["contractsPath"], "action glow era all liquid critic achieve lawsuit era anger loud slight", []byte(pswdStr))
 
 	logger := log.Root().New("test", cfg.Name)
 

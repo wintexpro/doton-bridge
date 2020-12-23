@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const DefaultContractsPath = "./contracts"
 const DefaultConfigPath = "./config.json"
 const DefaultKeystorePath = "./keys"
 const DefaultBlockTimeout = int64(180) // 3 minutes

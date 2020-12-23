@@ -111,8 +111,6 @@ func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<-
 	writer := NewWriter(conn, cfg, log, kp, stop, sysErr, m)
 	listener := NewListener(conn, bs, cfg, log, stop, sysErr)
 
-	err = writer.CheckAndDeploySender()
-
 	return (&Chain{
 		cfg:      chainCfg,
 		conn:     conn,

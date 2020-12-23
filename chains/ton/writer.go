@@ -4,13 +4,10 @@
 package ton
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ChainSafe/log15"
 	"github.com/radianceteam/ton-client-go/client"
-	"github.com/volatiletech/null"
 	"github.com/wintexpro/chainbridge-utils/core"
 	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	metrics "github.com/wintexpro/chainbridge-utils/metrics/types"
@@ -18,6 +15,8 @@ import (
 )
 
 var _ core.Writer = &writer{}
+
+const Relayer = "Relayer"
 
 type writer struct {
 	cfg     Config
@@ -33,14 +32,11 @@ type writer struct {
 
 // NewWriter creates and returns writer
 func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypair, stop <-chan int, sysErr chan<- error, m *metrics.ChainMetrics) *writer {
-	senderABI := LoadAbi(cfg.contractsPath, "Sender")
-	senderTVC := LoadTvc(cfg.contractsPath, "Sender")
-
 	abi := make(map[string]client.Abi)
-	abi["Sender"] = senderABI
-
 	tvc := make(map[string]string)
-	tvc["Sender"] = senderTVC
+
+	abi[Relayer] = LoadAbi(cfg.contractsPath, Relayer)
+	tvc[Relayer] = LoadTvc(cfg.contractsPath, Relayer)
 
 	return &writer{
 		cfg:     *cfg,
@@ -64,66 +60,5 @@ func MessageCallback(event *client.ProcessingEvent) {
 func (w *writer) ResolveMessage(m msg.Message) bool {
 	w.log.Info("Attempting to resolve message", "type", m.Type, "src", m.Source, "dst", m.Destination, "nonce", m.DepositNonce, "rId", m.ResourceId.Hex())
 
-	// w.abi["Sender"]
-
 	return false
-}
-
-func (w *writer) CheckAndDeploySender() error {
-	keys := client.KeyPair{
-		Public: w.kp.PublicKey(),
-		Secret: w.kp.SecretKey(),
-	}
-
-	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: keys,
-	}
-
-	deploySet := client.DeploySet{
-		Tvc:         w.tvc["Sender"],
-		WorkchainID: null.NewInt32(0, true),
-	}
-
-	callSet := client.CallSet{
-		FunctionName: "constructor",
-	}
-
-	paramsOfEncodeMsg := client.ParamsOfEncodeMessage{
-		Abi:       w.abi["Sender"],
-		DeploySet: &deploySet,
-		CallSet:   &callSet,
-		Signer:    signer,
-	}
-
-	encodedMessage, err := w.conn.Client().AbiEncodeMessage(&paramsOfEncodeMsg)
-	if err != nil {
-		return err
-	}
-
-	paramsOfQuery := client.ParamsOfQueryCollection{
-		Collection: "accounts",
-		Filter:     json.RawMessage(`{ "id": {"eq": "` + encodedMessage.Address + `"} }`),
-		Result:     "id balance",
-	}
-
-	res, err := w.conn.Client().NetQueryCollection(&paramsOfQuery)
-	if err != nil {
-		return err
-	}
-
-	if len(res.Result) == 0 {
-		return errors.New("Your sender address: " + encodedMessage.Address + " does not have balance for deploy the contract code")
-	}
-
-	senderAbi := w.abi["Sender"]
-
-	paramsOfSendMessage := client.ParamsOfSendMessage{
-		Message: encodedMessage.Message,
-		Abi:     &senderAbi,
-	}
-
-	_, err = w.conn.Client().ProcessingSendMessage(&paramsOfSendMessage, MessageCallback)
-
-	return nil
 }

@@ -4,6 +4,7 @@
 package utils
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,7 +23,7 @@ type EncryptedTonKeystore struct {
 	Secret string `json:"secret"`
 }
 
-func ImportTonKeysFromFile(keystorepath, filename string, password []byte) (string, error) {
+func ImportTonKeysFromFile(keystorepath, contractsPath, filename string, password []byte) (string, error) {
 	if password == nil {
 		password = keystore.GetPassword("Enter password to encrypt keystore file:")
 	}
@@ -38,7 +39,7 @@ func ImportTonKeysFromFile(keystorepath, filename string, password []byte) (stri
 	kp := ed25519.Keypair{}
 	kp.Decode([]byte(ksjson.Secret))
 
-	kp.SetAddress(DeriveSenderAddress(client.KeyPair{
+	kp.SetAddress(DeriveRelayerAddress(contractsPath, client.KeyPair{
 		Public: kp.PublicKey(),
 		Secret: kp.SecretKey(),
 	}))
@@ -69,7 +70,7 @@ func ImportTonKeysFromFile(keystorepath, filename string, password []byte) (stri
 	return fp, nil
 }
 
-func ImportTonPrivKey(keystorepath, key string, password []byte) (string, error) {
+func ImportTonPrivKey(keystorepath, contractsPath, key string, password []byte) (string, error) {
 	if password == nil {
 		password = keystore.GetPassword("Enter password to encrypt keystore file:")
 	}
@@ -79,7 +80,7 @@ func ImportTonPrivKey(keystorepath, key string, password []byte) (string, error)
 		return "", fmt.Errorf("could not generate ed25519 keypair from given string: %w", err)
 	}
 
-	kp.SetAddress(DeriveSenderAddress(client.KeyPair{
+	kp.SetAddress(DeriveRelayerAddress(contractsPath, client.KeyPair{
 		Public: kp.PublicKey(),
 		Secret: kp.SecretKey(),
 	}))
@@ -110,7 +111,39 @@ func ImportTonPrivKey(keystorepath, key string, password []byte) (string, error)
 	return fp, nil
 }
 
-func DeriveSenderAddress(keys client.KeyPair) string {
+func LoadAbi(path, name string) client.Abi {
+	content, err := ioutil.ReadFile(path + "/" + name + ".abi.json")
+	if err != nil {
+		panic(err)
+	}
+	abi := client.Abi{Type: client.ContractAbiType}
+	if err = json.Unmarshal(content, &abi.Value); err != nil {
+		panic(err)
+	}
+
+	return abi
+}
+
+func LoadTvc(path, name string) string {
+	content, err := ioutil.ReadFile(path + "/" + name + ".tvc")
+	if err != nil {
+		panic(err)
+	}
+
+	return base64.StdEncoding.EncodeToString(content)
+}
+
+type RelayerInitialData struct {
+	AccessControllerAddress string
+	MyPublicKey             []byte
+	MyInitState             []byte
+	BridgeAddress           string
+}
+
+func DeriveRelayerAddress(contractsPath string, keys client.KeyPair) string {
+	RelayerABI := LoadAbi(contractsPath, "Relayer")
+	RelayerTVC := LoadTvc(contractsPath, "Relayer")
+
 	conn, err := NewClient()
 	if err != nil {
 		panic(err)
@@ -122,27 +155,33 @@ func DeriveSenderAddress(keys client.KeyPair) string {
 	}
 
 	deploySet := client.DeploySet{
-		Tvc:         SenderTVC,
+		Tvc:         RelayerTVC,
 		WorkchainID: null.NewInt32(0, true),
 	}
 
 	callSet := client.CallSet{
 		FunctionName: "constructor",
-	}
-
-	abi := client.Abi{Type: client.ContractAbiType}
-	if err = json.Unmarshal([]byte(SenderABI), &abi.Value); err != nil {
-		panic(err)
+		Input: map[string]interface{}{
+			// ignore this args
+			"_accessControllerAddress": null.StringFrom("0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f"),
+			"_myPublicKey":             null.StringFrom("0x" + keys.Public),
+			"_myInitState":             null.StringFrom(RelayerTVC),
+			"_bridgeAddress":           null.StringFrom("0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f"),
+		},
 	}
 
 	params := client.ParamsOfEncodeMessage{
-		Abi:       abi,
+		Abi:       RelayerABI,
 		DeploySet: &deploySet,
 		CallSet:   &callSet,
 		Signer:    signer,
 	}
 
 	res, err := conn.AbiEncodeMessage(&params)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("\n\nAddress: %s \n\n", res.Address)
 
 	return res.Address
 }

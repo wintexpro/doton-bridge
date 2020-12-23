@@ -1,0 +1,116 @@
+{
+	"ABI version": 2,
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"_accessControllerAddress","type":"address"},
+				{"name":"_myPublicKey","type":"uint256"},
+				{"name":"_myInitState","type":"cell"},
+				{"name":"_bridgeAddress","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "bridgeSetHandler",
+			"inputs": [
+				{"name":"messageType","type":"uint256"},
+				{"name":"handlerAddress","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteThroughBridge",
+			"inputs": [
+				{"name":"choice","type":"uint8"},
+				{"name":"chainId","type":"uint8"},
+				{"name":"messageType","type":"uint256"},
+				{"name":"nonce","type":"uint64"},
+				{"name":"data","type":"uint256"},
+				{"name":"proposalPublicKey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateValueForChangeRole",
+			"inputs": [
+				{"name":"newValue","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getValueForChangeRole",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "updateValueForChangeSuperAdmin",
+			"inputs": [
+				{"name":"newValue","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getValueForChangeSuperAdmin",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "grantSuperAdmin",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getRole",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"my_role","type":"uint8"}
+			]
+		},
+		{
+			"name": "grantRole",
+			"inputs": [
+				{"name":"role","type":"uint8"},
+				{"name":"targetAddress","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeRole",
+			"inputs": [
+				{"name":"initiatorRole","type":"uint8"},
+				{"name":"role","type":"uint8"},
+				{"name":"touchingPublicKey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deactivateHimself",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	]
+}

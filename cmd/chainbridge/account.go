@@ -95,15 +95,20 @@ func handleImportCmd(ctx *cli.Context, dHandler *dataHandler) error {
 			password = []byte(pwdflag)
 		}
 
-		keystorepath, err := keystoreDir(dHandler.datadir)
+		keystorePath, err := keystoreDir(dHandler.datadir)
+		if err != nil {
+			return err
+		}
+
+		contractsPath, err := contractsDir()
 		if err != nil {
 			return err
 		}
 
 		if seedPhraseKeyFlag := ctx.String(config.SeedPhraseKeyFlag.Name); seedPhraseKeyFlag != "" {
-			_, err = utils.ImportTonPrivKey(keystorepath, seedPhraseKeyFlag, password)
+			_, err = utils.ImportTonPrivKey(keystorePath, contractsPath, seedPhraseKeyFlag, password)
 		} else if keyimport := ctx.Args().First(); keyimport != "" {
-			_, err = utils.ImportTonKeysFromFile(keystorepath, keyimport, password)
+			_, err = utils.ImportTonKeysFromFile(keystorePath, contractsPath, keyimport, password)
 		} else {
 			return fmt.Errorf("Must provide a key to import.")
 		}
@@ -372,6 +377,11 @@ func generateKeypair(keytype, datadir string, password []byte, subNetwork string
 	var kp crypto.Keypair
 	var err error
 
+	contractsPath, err := contractsDir()
+	if err != nil {
+		return "", fmt.Errorf("could not get contracts directory: %w", err)
+	}
+
 	if keytype == crypto.Sr25519Type {
 		// generate sr25519 keys
 		kp, err = sr25519.GenerateKeypair(subNetwork)
@@ -390,7 +400,7 @@ func generateKeypair(keytype, datadir string, password []byte, subNetwork string
 		if err != nil {
 			return "", fmt.Errorf("could not generate ed25519 keypair: %w", err)
 		}
-		kp.(*ed25519.Keypair).SetAddress(utils.DeriveSenderAddress(client.KeyPair{
+		kp.(*ed25519.Keypair).SetAddress(utils.DeriveRelayerAddress(contractsPath, client.KeyPair{
 			Public: kp.PublicKey(),
 			Secret: kp.(*ed25519.Keypair).SecretKey(),
 		}))
@@ -427,6 +437,46 @@ func generateKeypair(keytype, datadir string, password []byte, subNetwork string
 
 	log.Info("key generated", "address", kp.Address(), "type", keytype, "file", fp)
 	return fp, nil
+}
+
+// contractsDir returnns the absolute filepath of the contracts (ABI, TVC) directory given a datadir
+// by default, it is ./contracts/
+// otherwise, it is datadir/contracts/
+func contractsDir() (contractspath string, err error) {
+	contractsPath := ""
+	// datadir specified, return datadir/keys as absolute path
+	if contractsPath != "" {
+		contractspath, err = filepath.Abs(contractsPath)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		// datadir not specified, use default
+		contractsPath = config.DefaultContractsPath
+
+		contractspath, err = filepath.Abs(contractsPath)
+		if err != nil {
+			return "", fmt.Errorf("could not create contracts path: %w", err)
+		}
+	}
+
+	// if datadir does not exist, create it
+	if _, err = os.Stat(contractsPath); os.IsNotExist(err) {
+		err = os.Mkdir(contractsPath, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// if datadir/conracts does not exist, create it
+	if _, err = os.Stat(contractspath); os.IsNotExist(err) {
+		err = os.Mkdir(contractspath, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return contractspath, nil
 }
 
 // keystoreDir returnns the absolute filepath of the keystore directory given a datadir
