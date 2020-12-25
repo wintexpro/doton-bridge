@@ -1,10 +1,10 @@
-# ChainBridge
+# DOTON
 
-[![Build Status](https://travis-ci.com/ChainSafe/ChainBridge.svg?branch=master)](https://travis-ci.com/ChainSafe/ChainBridge)
+This is a fork of the [original repository](https://github.com/ChainSafe/ChainBridge) to which the functionality of interacting with the TON node and some additional business logic were added.
 
 # Contents
 
-- [ChainBridge](#chainbridge)
+- [DOTON](#doton)
 - [Contents](#contents)
 - [Getting Started](#getting-started)
 - [Installation](#installation)

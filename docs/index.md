@@ -18,7 +18,7 @@ At a high level, ChainBridge is a message passing protocol. Events on a source c
 This is the original repository of the core bridging software that Relayers run between chains.
 
 ### [wintexpro/DOTON](https://github.com/wintexpro/doton-bridge)
-This is a fork of the original repository to which the functionality of interacting with the TON node was added. and some additional business logic.
+This is a fork of the original repository to which the functionality of interacting with the TON node and some additional business logic were added.
     
 ### [wintexpro/doton-substrate](https://github.com/wintexpro/doton-substrate)
 A substrate pallet that can be integrated into a chain, as well as an example pallet to demonstrate passing simple message between TON and Substrate chains.
