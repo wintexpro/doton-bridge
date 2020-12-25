@@ -1,285 +1,167 @@
 # Running Locally
-## Prerequisites
+# doton-local-network ([Github](https://github.com/wintexpro/doton-local-network))
 
-- Docker, docker-compose
-- chainbridge `v1.0.0` binary (see [README](https://github.com/chainsafe/chainbridge/#building))
-- Polkadot JS Portal ([https://portal.chain.centrifuge.io](https://portal.chain.centrifuge.io/))
-    - Connect to your local node (below) by clicking in the top-left corner and using `ws://localhost:9944`
-    - You will need to setup the type definitions for the chain by selecting `Settings` -> `Developer`
-    - Type definitions can be found here: [PolkadotJS Apps](https://github.com/ChainSafe/chainbridge-substrate-chain#polkadot-js-apps)
-- cb-sol-cli (see [README](https://github.com/ChainSafe/chainbridge-deploy/tree/master/cb-sol-cli#cb-sol-cli-documentation))
+A docker development environment for a doton local network
 
-## Starting Local Chains
+## Requirements
 
-The easiest way to get started is to use the docker-compose file found here: [https://gist.github.com/ansermino/f1571bb354d2007b26dce53d52dbca75](https://gist.github.com/ansermino/f1571bb354d2007b26dce53d52dbca75). This will start a geth instance and an instance of chainbridge-substrate-chain:
+ - [docker](https://docs.docker.com/engine/install/)
+ - [docker-compose](https://docs.docker.com/compose/install/)
 
-```bash
-docker-compose -f ./docker-compose-geth-substrate.yml up -V
+## Getting Started
+
+Clone this repo:
+```sh
+$ git clone git@github.com:wintexpro/doton-local-network.git
 ```
 
-(Use `-V` to always start with new chains. These instructions depend on deterministic ethereum addresses, which are used as defaults implicitly by some of these commands. Avoid re-deploying the contracts without restarting both chains, or ensure to specify all the required parameters.)
+Inside `./doton-local-network` directory run:
 
-## On-Chain Setup (Ethereum)
-
-### Deploy Contracts
-
-To deploy the contracts on to the Ethereum chain, run the following:
-
-```bash
-cb-sol-cli deploy --all --relayerThreshold 1
+```sh
+$ make run-chains
 ```
 
-After running, the expected output looks like this:
+After making sure TON OS SE and substrate services are running, you can run the environment setup script
 
-```bash
-================================================================
-Url:        http://localhost:8545
-Deployer:   0xff93B45308FD417dF303D6515aB04D9e89a750Ca
-Gas Limit:   8000000
-Gas Price:   20000000
-Deploy Cost: 0.0
-
-Options
-=======
-Chain Id:    0
-Threshold:   2
-Relayers:    0xff93B45308FD417dF303D6515aB04D9e89a750Ca,0x8e0a907331554AF72563Bd8D43051C2E64Be5d35,0x24962717f8fA5BA3b931bACaF9ac03924EB475a0,0x148FfB2074A9e59eD58142822b3eB3fcBffb0cd7,0x4CEEf6139f00F9F4535Ad19640Ff7A0137708485
-Bridge Fee:  0
-Expiry:      100
-
-Contract Addresses
-================================================================
-Bridge:             0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B
-----------------------------------------------------------------
-Erc20 Handler:      0x3167776db165D8eA0f51790CA2bbf44Db5105ADF
-----------------------------------------------------------------
-Erc721 Handler:     0x3f709398808af36ADBA86ACC617FeB7F5B7B193E
-----------------------------------------------------------------
-Generic Handler:    0x2B6Ab4b880A45a07d83Cf4d664Df4Ab85705Bc07
-----------------------------------------------------------------
-Erc20:              0x21605f71845f372A9ed84253d2D024B7B10999f4
-----------------------------------------------------------------
-Erc721:             0xd7E33e1bbf65dC001A0Eb1552613106CD7e40C31
-----------------------------------------------------------------
-Centrifuge Asset:   0xc279648CE5cAa25B9bA753dAb0Dfef44A069BaF4
-================================================================
+```sh
+$ make run-setup
 ```
 
-### Register Resources
+That execute to send initial value to contracts and deploy them to local TON node, also set up a substrate node for interacting with DOTON protocol. After setup, this command attaches you to a docker container with [tonos-cli](https://github.com/tonlabs/tonos-cli) and [halva-cli](https://github.com/halva-suite/halva) tools.
 
-```bash
-# Register fungible resource ID with erc20 contract
-cb-sol-cli bridge register-resource --resourceId "0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00" --targetContract "0x21605f71845f372A9ed84253d2D024B7B10999f4"
+At last, you can run the relay node by running the command (please, make sure the setup scripts were done):
 
-# Register non-fungible resource ID with erc721 contract
-cb-sol-cli bridge register-resource --resourceId "0x000000000000000000000000000000e389d61c11e5fe32ec1735b3cd38c69501" --targetContract "0xd7E33e1bbf65dC001A0Eb1552613106CD7e40C31" --handler "0x3f709398808af36ADBA86ACC617FeB7F5B7B193E"
-
-# Register generic resource ID
-cb-sol-cli bridge register-generic-resource --resourceId "0x000000000000000000000000000000f44be64d2de895454c3467021928e55e01" --targetContract "0xc279648CE5cAa25B9bA753dAb0Dfef44A069BaF4" --handler "0x2B6Ab4b880A45a07d83Cf4d664Df4Ab85705Bc07" --hash --deposit "" --execute "store(bytes32)"
+```sh
+$ make run-bridge
 ```
 
-### Specify Token Semantics
+## Polkadot JS Apps
 
-To allow for a variety of use cases, the Ethereum contracts support both the `transfer` and the `mint/burn` ERC methods.
+You can interact with a substrate local node by visiting https://polkadot.js.org/apps/ and choose "Local Node" network
 
-For simplicity's sake the following examples only make use of the  `mint/burn` method:
-
-```bash
-# Register the erc20 contract as mintable/burnable
-cb-sol-cli bridge set-burn --tokenContract "0x21605f71845f372A9ed84253d2D024B7B10999f4"
-
-# Register the associated handler as a minter
-cb-sol-cli erc20 add-minter --minter "0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"
-
-# Register the erc721 contract as mintable/burnable
-cb-sol-cli bridge set-burn --tokenContract "0xd7E33e1bbf65dC001A0Eb1552613106CD7e40C31" --handler "0x3f709398808af36ADBA86ACC617FeB7F5B7B193E"
-
-# Add the handler as a minter
-cb-sol-cli erc721 add-minter --minter "0x3f709398808af36ADBA86ACC617FeB7F5B7B193E"
-```
-
-## On-Chain Setup (Substrate)
-
-### Registering Relayers
-
-First we need to register the account of the relayer on substrate (cb-sol-cli deploys contracts with the 5 test keys preloaded). 
-
-Select the `Sudo` tab in the PolkadotJS UI. Choose the `addRelayer` method of `chainBridge`, and select Alice as the relayer.
-
-### Register Resources
-
-Select the `Sudo` tab and call `chainBridge.setResourceId` for each of the transfer types you wish to use:
-
-**Fungible (Native asset):**
-
-Id: `0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00`
-
-Method: `0x4578616d706c652e7472616e73666572` (utf-8 encoding of "Example.transfer")
-
-**NonFungible(ERC721):**
-
-Id: `0x000000000000000000000000000000e389d61c11e5fe32ec1735b3cd38c69501`
-
-Method: `0x4578616d706c652e6d696e745f657263373231` (utf-8 encoding of "Example.mint_erc721")
-
-**Generic (Hash Transfer):**
-
-Id: `0x000000000000000000000000000000f44be64d2de895454c3467021928e55e01`
-
-Method:  `0x4578616d706c652e72656d61726b` (utf-8 encoding of "Example.remark")
-
-### Whitelist Chains
-
-Using the `Sudo` tab, call `chainBridge.whitelistChain`, specifying `0` for out ethereum chain ID.
-
-## Running A Relayer
-
-Here is an example config file for a single relayer ("Alice") using the contracts we've deployed.
+You will need to add these definitions to the [developer settings](https://polkadot.js.org/apps/#/settings/developer):
 
 ```json
 {
-  "chains": [
-    {
-      "name": "eth",
-      "type": "ethereum",
-      "id": "0",
-      "endpoint": "ws://localhost:8545",
-      "from": "0xff93B45308FD417dF303D6515aB04D9e89a750Ca",
-      "opts": {
-        "bridge": "0x62877dDCd49aD22f5eDfc6ac108e9a4b5D2bD88B",
-        "erc20Handler": "0x3167776db165D8eA0f51790CA2bbf44Db5105ADF",
-        "erc721Handler": "0x3f709398808af36ADBA86ACC617FeB7F5B7B193E",
-        "genericHandler": "0x2B6Ab4b880A45a07d83Cf4d664Df4Ab85705Bc07",
-        "gasLimit": "1000000",
-        "maxGasPrice": "20000000"
-      }
-    },
-    {
-      "name": "sub",
-      "type": "substrate",
-      "id": "1",
-      "endpoint": "ws://localhost:9944",
-      "from": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-      "opts": {}
-    }
-  ]
+  "Message": "Text",
+  "chainbridge::ChainId": "u8",
+  "ExtAddress": "Text",
+  "ChainId": "u8",
+  "ResourceId": "[u8; 32]",
+  "Nonce": "u64",
+  "DepositNonce": "u64",
+  "ProposalVotes": {
+    "votes_for": "Vec<AccountId>",
+    "votes_against": "Vec<AccountId>",
+    "status": "enum"
+  },
+  "Address": "AccountId",
+  "LookupSource": "AccountId"
 }
 ```
 
+## FreeTON Local Node
 
-Run ``` make install ``` in ChanBridge directory to build chainbridge and put it in GOBIN path, 
+TONOS Startup Edition (SE) is a pre-configured Docker image with a local blockchain that provides the same API as a Dapp Server.
 
+You can interact with a FreeTON local node by visiting http://127.0.0.1/graphql
 
-You can then start a relayer as a binary using the default "Alice" key.
+## Helpers
 
-```bash
-chainbridge --config config.json --testkey alice --latest
+To send a message to Substrate through TON, you must follow a helper command:
+
+```sh 
+make ton-send-msg MSG="Hello substrate\!"
 ```
 
-OR 
+And to send a message to TON through Substrate:
 
-By building an image first
-
-```bash
-docker build -t chainsafe/chainbridge .
-```
-You can start the relayer as a docker container 
-
-```bash
-docker run -v ./config.json:/config.json --network host chainsafe/chainbridge --testkey alice --latest
+```sh 
+make sub-send-msg MSG="Hello ton\!"
 ```
 
-## Fungible Transfers
+## Configuration
 
-### Substrate Native Token ⇒ ERC 20
+This repository is fully complete to working with the bridge, but if you need to change any config files, you can do so without rebuilding docker images. Directories `./scripts`, `./configs`, `./contracts`, `./keys` will be mounted to docker containers
 
-In the substrate UI select the `Extrinsics` tab, and call `example.transferNative` with these parameters:
+#### Keys:
 
-- Amount: `1000` **(select `Pico` for units)**
-- Recipient: `0xff93B45308FD417dF303D6515aB04D9e89a750Ca`
-- Dest Id: `0`
+The Repository contains prepared TON keys:
 
-You can query the recipients balance on ethereum with this:
+`./keys/0:df22eba0b48020b70efa7a6e9d6360ed1dc20877250947470cc1289b14c9cc1e.key` - The test relay node key derived from the seed phrase: `"action glow era all liquid critic achieve lawsuit era anger loud slight"`, also same key `0:df22eba0b48020b70efa7a6e9d6360ed1dc20877250947470cc1289b14c9cc1e.tonos.key` in tonos format.
 
-```bash
-cb-sol-cli erc20 balance --address "0xff93B45308FD417dF303D6515aB04D9e89a750Ca"
+And Substrate sr25519 key:
+`5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY.key` derived from Uri `//Alice`
+
+You can replace them with your own keys if you need.
+
+#### Configuration files
+
+##### configs/config.json
+```
+{
+    "name": "freeTON",                  // Human-readable name
+    "type": "ton",                      // Chain type (eg. "ton" or "substrate")
+    "id": "0",                          // Chain ID
+    "endpoint": "ws://<host>:<port>",   // Node endpoint
+    "from": "0:164d61e...",             // On-chain address of relayer
+    "opts": {},                         // Chain-specific configuration options (see below)
+}
 ```
 
-### ERC20 ⇒ Substrate Native Token
+###### Ton Options:
 
-If necessary, you can mint some tokens:
+Ton chains support the following additional options:
 
-```bash
-cb-sol-cli erc20 mint --amount 1000
+```
+{
+
+    "contractsPath": "/contracts", // The path to contract files (ABI, TVC)
+    "receiver": "0:e50f...92ee",   // The contract Reciver address (Deploy script in /scripts/Makefile target: ton-deploy-contracts)
+    "startBlock": "1",             // The block to start processing events from (default: 0)
+    "workchainID": "0"             // The workchain from which the events will be processing
+}
 ```
 
-Before initiating the transfer we have to approve the bridge to take ownership of the tokens:
+###### Substrate Options
 
-```bash
-cb-sol-cli erc20 approve --amount 1000 --recipient "0x3167776db165D8eA0f51790CA2bbf44Db5105ADF"
+Substrate supports the following additonal options:
+
+```
+{
+    "startBlock": "1234" // The block to start processing events from (default: 0)
+    "useExtendedCall": "true" // Extend extrinsic calls to substrate with ResourceID. Used for backward compatibility with example pallet.
+}
 ```
 
-To initiate a transfer on the ethereum chain use this command (Note: there will be a 10 block delay before the relayer will process the transfer):
-
-```bash
-cb-sol-cli erc20 deposit --amount 1 --dest 1 --recipient "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d" --resourceId "0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00"
+###### configs/halva.js
 ```
+const mnemonic = "bottom drive obey lake curtain smoke basket hold race lonely fit walk"; // don't used in this case
 
-## Non-Fungible Transfers
-
-### Substrate NFT ⇒ ERC721
-
-First, you'll need to mint a token. Select the `Sudo` tab and call `erc721.mint` with parameters such as these:
-
-- Owner: `Alice`
-- TokenId: `1`
-- Metadata: `""`
-
-Now the owner of the token can initiate a transfer by calling `example.transferErc721`:
-
-- Recipient: `0xff93B45308FD417dF303D6515aB04D9e89a750Ca`
-- TokenId: `1`
-- DestId: `0`
-
-You can query ownership of tokens on ethereum with this:
-
-```bash
-cb-sol-cli erc721 owner --id 0x1
-```
-
-### ERC721 ⇒ Substrate NFT
-
-If necessary, you can mint an erc721 token like this:
-
-```bash
-cb-sol-cli erc721 mint --id 0x99
-```
-
-Before initiating the transfer, we must approve the bridge to take ownership of the tokens:
-
-```bash
-cb-sol-cli erc721 approve --id 0x99 --recipient "0x3f709398808af36ADBA86ACC617FeB7F5B7B193E"
-```
-
-Now we can initiate the transfer:
-
-```bash
-cb-sol-cli erc721 deposit --id 0x99 --dest 1 --resourceId "0x000000000000000000000000000000e389d61c11e5fe32ec1735b3cd38c69501" --recipient "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
-```
-
-### Generic Data Transfer
-
-To demonstrate a possible use of the generic data transfer, we have a hash registry on ethereum. We also have a method on the example substrate chain to emit a hash inside an event, which we can trigger from ethereum. 
-
-### Generic Data Substrate ⇒ Eth
-
-For this example we will transfer a 32 byte hash to a registry on ethereum. Using the `Extrinsics` tab, call `example.transferHash`:
-
-- Hash: `0x699c776c7e6ce8e6d96d979b60e41135a13a2303ae1610c8d546f31f0c6dc730`
-- Dest ID: `0`
-
-You can verify the transfer with this command:
-
-```bash
-cb-sol-cli cent getHash --hash 0x699c776c7e6ce8e6d96d979b60e41135a13a2303ae1610c8d546f31f0c6dc730
+module.exports = {
+  networks: {
+    test: {
+      mnemonic,
+      ws: "ws://doton-sub-chain:9944", // substrate endpoint
+    },
+  },
+  polkadotjs: {
+    types: { // substrate custom types (defined bellow)
+      "Message": "Text",
+      "ExtAddress": "Text",
+      "chainbridge::ChainId": "u8",
+      "ChainId": "u8",
+      "ResourceId": "[u8; 32]",
+      "Nonce": "u64",
+      "DepositNonce": "u64",
+      "ProposalVotes": {
+        "votes_for": "Vec<AccountId>",
+        "votes_against": "Vec<AccountId>",
+        "status": "enum"
+      },
+      "Address": "AccountId",
+      "LookupSource": "AccountId"
+    }
+  }
+}
 ```

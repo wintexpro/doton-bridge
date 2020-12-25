@@ -52,6 +52,7 @@ To date DOTON support only SimpleMessage transfer type
 ### SimpleMessage
 |Field|Type|Description|
 |----|----|-----------|
+| From | variable sized bytes | External address from an original chain |
 | Message | variable sized bytes | The string converted into a byte array |
 
 ### Fungible

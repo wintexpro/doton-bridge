@@ -4,8 +4,8 @@
 site_name: DOTON Docs
 site_description: An implementation of a bridge between FreeTON and substrate-based networks
 
-repo_name: wintexpro/chainbridge
-repo_url: https://github.com/wintexpro/chainbridge
+repo_name: wintexpro/doton-bridge
+repo_url: https://github.com/wintexpro/doton-bridge
 
 # Configuration
 markdown_extensions:
@@ -21,6 +21,7 @@ theme:
     primary: black
   favicon: img/favicon.ico
 nav:
+  - Overview: index.md
   - Installation: installation.md
   - Configuration:
     - Overview: configuration.md
@@ -33,4 +34,4 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github-alt
-      link: https://github.com/wintexpro/chainbridge
+      link: https://github.com/wintexpro/doton-bridge
