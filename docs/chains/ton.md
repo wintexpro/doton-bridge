@@ -1,8 +1,12 @@
 # TON Implementation Specification
 
-Ton implementation of bridge should consist of some set of contracts: Bridge, BridgeVoteController, Proposal, Handler.
+Ton implementation of bridge should consist of some set of contracts: Bridge, BridgeVoteController, Proposal, Handler. As a source chain of transfer flow, ton implementation has Sender and Receiver contracts.
 
 ## Transfer Flow
+1. Some users calls `sendData` function of `Sender` contract.
+2. `Sender` contract calls `Receiver` by given address.
+3. `Receiver` increment nonce by given chainId and emits `DataReceived` event
+4. Relayers parse the `DataReceived` event and retrieve the associated record from the handler to construct a message.
 
 ### As Source Chain
 
@@ -45,4 +49,18 @@ function voteByController(address voter, uint8 choice, bytes32 messageType, addr
 
 ```
 event ProposalExecuted(uint8 chainId, uint64 nonce, bytes32 messageType, bytes32 data);
+```
+
+## Sender
+`Sender` is a contract for sending some data for transfering it via bridge
+
+```
+function sendData(IReceiver destination, bool bounce, uint128 value, bytes32 data, uint256 destinationChainId) external onlyOwner
+```
+
+## Receiver
+`Receiver` is a message emitter for relayers. another task for `Receiver` is a chain id nonces storing
+
+```
+function receiveData(bytes32 data, uint256 destinationChainId) external
 ```
