@@ -18,11 +18,13 @@ See `config.json.example` for an example configuration.
 ### Ton Options
 
 Ton chains support the following additional options:
-
 ```
 {
-    "startBlock": "1234",                  // The block to start processing events from (default: 0)
-    "contractsPath": "/User/.../contracts" // The path to contract files (ABI, TVC)
+
+    "contractsPath": "/contracts", // The path to contract files (ABI, TVC)
+    "receiver": "0:e50f...92ee",   // The contract Reciver address (Deploy script in /scripts/Makefile target: ton-deploy-contracts)
+    "startBlock": "1",             // The block to start processing events from (default: 0)
+    "workchainID": "0"             // The workchain from which the events will be processing
 }
 ```
 
