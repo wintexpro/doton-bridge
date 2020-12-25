@@ -39,7 +39,7 @@ RUN echo "deb http://security.ubuntu.com/ubuntu bionic-security main" >> /etc/ap
   apt-get install -y libssl1.0-dev
 
 RUN go mod download
-RUN cd cmd/chainbridge && go build -o /bridge .
+RUN cd cmd/doton && go build -o /bridge .
 
 # Make small image
 

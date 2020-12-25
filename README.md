@@ -1,10 +1,10 @@
-# DOTON
+# DOTON Bridge
 
-This is a fork of the [original repository](https://github.com/ChainSafe/ChainBridge) to which the functionality of interacting with the TON node and some additional business logic were added.
+This is a fork of the [original ChainSafe repository](https://github.com/ChainSafe/ChainBridge) to which the functionality of interacting with the TON node and some additional business logic were added.
 
 # Contents
 
-- [DOTON](#doton)
+- [DOTON Bridge](#doton-bridge)
 - [Contents](#contents)
 - [Getting Started](#getting-started)
 - [Installation](#installation)
@@ -12,88 +12,77 @@ This is a fork of the [original repository](https://github.com/ChainSafe/ChainBr
   - [Building](#building)
   - [Docker](#docker)
 - [Configuration](#configuration)
-    - [Ethereum Options](#ethereum-options)
+    - [TON Options](#ton-options)
     - [Substrate Options](#substrate-options)
   - [Blockstore](#blockstore)
   - [Keystore](#keystore)
-  - [Metrics](#metrics)
 - [Chain Implementations](#chain-implementations)
 - [Docs](#docs)
-- [Testing](#testing)
-- [ChainSafe Security Policy](#chainsafe-security-policy)
-  - [Reporting a Security Bug](#reporting-a-security-bug)
 
 # Getting Started
-- Check out our [documentation](https://chainsafe.github.io/ChainBridge/).
-- Try [running ChainBridge locally](https://chainsafe.github.io/ChainBridge/local/).
-- Chat with us on [discord](https://discord.gg/GPH6Sp).
+
+- Check out our [documentation](https://wintexpro.github.io/doton-bridge/).
+- Try [running DOTON Bridge locally](https://wintexpro.github.io/doton-bridge/local/).
+- Chat with us on telegram [[EN](https://t.me/doton_bridge)] [[RU](https://t.me/doton_bridge_ru)]
 
 # Installation
 
 ## Dependencies
 
-- [Subkey](https://substrate.dev/docs/en/knowledgebase/integrate/subkey): 
-Used for substrate key management. Only required if connecting to a substrate chain.
+- DOTON Bridge use [ton-client-go](https://github.com/radianceteam/ton-client-go) and require [Rust](https://www.rust-lang.org/tools/install) and [TON-SDK](https://github.com/tonlabs/TON-SDK) (see [radianceteam/ton-client-go](https://github.com/radianceteam/ton-client-go)) Only required if connecting to a ton chain.
 
+- [Subkey](https://substrate.dev/docs/en/knowledgebase/integrate/subkey): Used for substrate key management. Only required if connecting to a substrate chain.
 
 ## Building
 
-`make build`: Builds `chainbridge` in `./build`.
+`make build`: Builds `doton` in `./build`.
 
 **or**
 
-`make install`: Uses `go install` to add `chainbridge` to your GOBIN.
+`make install`: Uses `go install` to add `doton` to your GOBIN.
 
 ## Docker 
-The official ChainBridge Docker image can be found here.
+The official wintex Docker image can be found [here](https://hub.docker.com/repository/docker/wintex/doton-bridge).
 
 To build the Docker image locally run:
 
 ```
-docker build -t chainsafe/chainbridge .
+docker build -t wintex/doton-bridge .
 ```
 
-To start ChainBridge:
+To start DotonBridge:
 
 ``` 
-docker run -v ./config.json:/config.json chainsafe/chainbridge
+docker run -v ./config.json:/config.json wintex/doton-bridge
 ```
 
 # Configuration
-
-> Note: TOML configs have been deprecated in favour of JSON
 
 A chain configurations take this form:
 
 ```
 {
-    "name": "eth",                      // Human-readable name
-    "type": "ethereum",                 // Chain type (eg. "ethereum" or "substrate")
+    "name": "freeTON",                  // Human-readable name
+    "type": "ton",                      // Chain type (eg. "ton" or "substrate")
     "id": "0",                          // Chain ID
     "endpoint": "ws://<host>:<port>",   // Node endpoint
-    "from": "0xff93...",                // On-chain address of relayer
+    "from": "0:164d61e...",             // On-chain address of relayer
     "opts": {},                         // Chain-specific configuration options (see below)
 }
 ```
 
 See `config.json.example` for an example configuration. 
 
-### Ethereum Options
+### TON Options
 
-Ethereum chains support the following additional options:
-
+Ton chains support the following additional options:
 ```
 {
-    "bridge": "0x12345...",          // Address of the bridge contract (required)
-    "erc20Handler": "0x1234...",     // Address of erc20 handler (required)
-    "erc721Handler": "0x1234...",    // Address of erc721 handler (required)
-    "genericHandler": "0x1234...",   // Address of generic handler (required)
-    "maxGasPrice": "0x1234",         // Gas price for transactions (default: 20000000000)
-    "gasLimit": "0x1234",            // Gas limit for transactions (default: 6721975)
-    "http": "true",                  // Whether the chain connection is ws or http (default: false)
-    "startBlock": "1234",            // The block to start processing events from (default: 0)
-    "blockConfirmations": "10"       // Number of blocks to wait before processing a block
-    "useExtendedCall": "true"        // Extend extrinsic calls to substrate with ResourceID. Used for backward compatibility with example pallet. *Default: false*
+
+    "contractsPath": "/contracts", // The path to contract files (ABI, TVC)
+    "receiver": "0:e50f...92ee",   // The contract Reciver address (Deploy script in /scripts/Makefile target: ton-deploy-contracts)
+    "startBlock": "1",             // The block to start processing events from (default: 0)
+    "workchainID": "0"             // The workchain from which the events will be processing
 }
 ```
 
@@ -104,6 +93,7 @@ Substrate supports the following additonal options:
 ```
 {
     "startBlock": "1234" // The block to start processing events from (default: 0)
+    "useExtendedCall": "true" // Extend extrinsic calls to substrate with ResourceID. Used for backward compatibility with example pallet.
 }
 ```
 
@@ -117,69 +107,33 @@ To disable loading from the blockstore specify the `--fresh` flag. A custom path
 
 ## Keystore
 
-ChainBridge requires keys to sign and submit transactions, and to identify each bridge node on chain.
+DOTON Bridge requires keys to sign and submit transactions, and to identify each bridge node on chain.
 
-To use secure keys, see `chainbridge accounts --help`. The keystore password can be supplied with the `KEYSTORE_PASSWORD` environment variable.
+To use secure keys, see `doton accounts --help`. The keystore password can be supplied with the `KEYSTORE_PASSWORD` environment variable.
 
-To import external ethereum keys, such as those generated with geth, use `chainbridge accounts import --ethereum /path/to/key`.
+To import external ton keys, such as those generated with tonos-cli, use `doton accounts import --ton /path/to/key`.
 
-To import private keys as keystores, use `chainbridge account import --privateKey key`.
+or
 
-For testing purposes, chainbridge provides 5 test keys. The can be used with `--testkey <name>`, where `name` is one of `Alice`, `Bob`, `Charlie`, `Dave`, or `Eve`. 
+`doton accounts import --ton --seedphrase "action glow era all liquid critic achieve lawsuit era anger loud slight"`
 
-## Metrics
+To import private keys as keystores, use `doton account import --privateKey key`.
 
-See [metrics.md](/docs/metrics.md).
-
+For testing purposes, doton provides 5 test keys for substrate. The can be used with `--testkey <name>`, where `name` is one of `Alice`, `Bob`, `Charlie`, `Dave`, or `Eve`.
 # Chain Implementations
 
-- Ethereum (Solidity): [chainbridge-solidity](https://github.com/ChainSafe/chainbridge-solidity) 
+- TON: [doton-ton](chains/ton)
 
-    The Solidity contracts required for chainbridge. Includes deployment and interaction CLI.
-    
-    The bindings for the contracts live in `bindings/`. To update the bindings modify `scripts/setup-contracts.sh` and then run `make clean && make setup-contracts`
+    The contracts for interact with DOTON protocol
 
-- Substrate: [chainbridge-substrate](https://github.com/ChainSafe/chainbridge-substrate)
+- Substrate: [doton-substrate](chains/substrate)
 
     A substrate pallet that can be integrated into a chain, as well as an example pallet to demonstrate chain integration.
 
 # Docs
 
-MKdocs will generate static HTML files for Chainsafe markdown files located in `Chainbridge/docs/`
+MKdocs will generate static HTML files for DOTON markdown files located in `./docs/`
 
 `make install-mkdocs`: Pull the docker image MkDocs
 
 `make mkdocs`: Run MkDoc's docker image, building and hosting the html files on `localhost:8000`  
-
-# Testing
-
-Unit tests require an ethereum node running on `localhost:8545` and a substrate node running on `localhost:9944`. E2E tests require an additional ethereum node on `localhost:8546`. 
-
-A docker-compose file is provided to run two Geth nodes and a chainbridge-substrate-chain node in isolated environments:
-```
-$ docker-compose -f ./docker-compose-e2e.yml up
-```
-
-See [chainbridge-solidity](https://github.com/chainsafe/chainbridge-solidity) and [chainbridge-substrate-chain](https://github.com/ChainSafe/chainbridge-substrate-chain) for more information on testing facilities.
-
-All Go tests can be run with:
-```
-$ make test
-```
-Go tests specifically for ethereum, substrate and E2E can be run with
-```
-$ make test-eth
-$ make test-sub
-$ make test-e2e
-```
-
-# ChainSafe Security Policy
-
-## Reporting a Security Bug
-
-We take all security issues seriously, if you believe you have found a security issue within a ChainSafe
-project please notify us immediately. If an issue is confirmed, we will take all necessary precautions 
-to ensure a statement and patch release is made in a timely manner.
-
-Please email us a description of the flaw and any related information (e.g. reproduction steps, version) to
-[security at chainsafe dot io](mailto:security@chainsafe.io).

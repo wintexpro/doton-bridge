@@ -13,14 +13,14 @@ Used for substrate key management. Only required if connecting to a substrate ch
 
 ### Building from Source
 
-To build `chainbridge` in `./build`.
+To build `doton` in `./build`.
 ```
 $ make build
 ```
 
 **or**
 
-Use `go install` to add `chainbridge` to your GOBIN.
+Use `go install` to add `doton` to your GOBIN.
 
 ```
 $ make install

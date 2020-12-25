@@ -6,7 +6,13 @@ If you looking for a simple way to try bridge in action, please visit the page -
 
 ## Summary
 
-At a high level, ChainBridge is a message passing protocol. Events on a source chain are used to create a message that is then delivered to the destination chain. We define the concept of a Listener to extract events from a chain and construct a message, and a Writer to interpret messages and submit transactions to a chain. 
+#### DOTON
+
+DOTON is a message passing protocol based on ChainBridge protocol and extended in order to make it possible to work with TON chain. Currently, we support message passing between TON and Substrate-based chains.
+
+#### ChainBridge
+
+At a high level, ChainBridge is a message passing protocol. Events on a source chain are used to create a message that is then delivered to the destination chain. We define the concept of a Listener to extract events from a chain and construct a message, and a Writer to interpret messages and submit transactions to a chain.
 
 ![](./img/overview.png)
 

@@ -49,16 +49,16 @@ To disable loading from the blockstore specify the `--fresh` flag. A custom path
 
 ## Keystore
 
-ChainBridge requires keys to sign and submit transactions, and to identify each bridge node on chain.
+DOTON requires keys to sign and submit transactions, and to identify each bridge node on chain.
 
-To use secure keys, see `chainbridge accounts --help`. The keystore password can be supplied with the `KEYSTORE_PASSWORD` environment variable.
+To use secure keys, see `doton accounts --help`. The keystore password can be supplied with the `KEYSTORE_PASSWORD` environment variable.
 
-To import external ton keys, such as those generated with tonos-cli, use `chainbridge accounts import --ton /path/to/key.json`
+To import external ton keys, such as those generated with tonos-cli, use `doton accounts import --ton /path/to/key.json`
 
 or
 
-`chainbridge accounts import --ton --seedphrase "action glow era all liquid critic achieve lawsuit era anger loud slight"`
+`doton accounts import --ton --seedphrase "action glow era all liquid critic achieve lawsuit era anger loud slight"`
 
-To import private keys as keystores, use `chainbridge account import --privateKey key`.
+To import private keys as keystores, use `doton account import --privateKey key`.
 
-For testing purposes, chainbridge provides 5 test keys. The can be used with `--testkey <name>`, where `name` is one of `Alice`, `Bob`, `Charlie`, `Dave`, or `Eve`. 
+For testing purposes, doton provides 5 test keys. The can be used with `--testkey <name>`, where `name` is one of `Alice`, `Bob`, `Charlie`, `Dave`, or `Eve`. 

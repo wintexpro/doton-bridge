@@ -20,9 +20,9 @@
 
 ### Account Management
 
-The commands can be used to manage keys in the local keystore. You can view available keys with `chainbridge accounts list`.
+The commands can be used to manage keys in the local keystore. You can view available keys with `doton accounts list`.
 
-#### `chainbridge accounts generate`
+#### `doton accounts generate`
 ```
 --password value  Password used to encrypt the keystore. Used with --generate, --import, or --unlock
 --sr25519         Specify account/key type as sr25519. (default: false)
@@ -31,7 +31,7 @@ The commands can be used to manage keys in the local keystore. You can view avai
 --network value   Specify the network to use for the address encoding (substrate/polkadot/centrifuge) (default: substrate)
 ```
 
-#### `chainbridge accounts import`
+#### `doton accounts import`
 ```
 --seedphrase value  Derive keys from a seed phrase and import them into a keystore.
 --ton               Import an existing ton keystore. (default: false)

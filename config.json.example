@@ -1,0 +1,27 @@
+{
+  "chains": [
+    {
+      "name": "freeTON",
+      "type": "ton",
+      "id": "2",
+      "endpoint": "http://127.0.0.1",
+      "from": "0:df22eba0b48020b70efa7a6e9d6360ed1dc20877250947470cc1289b14c9cc1e",
+      "opts": {
+        "contractsPath": "/doton/contracts",
+        "receiver": "0:e50f4328179ef68fc4c45032adc97b714f668e4152a7b6805a391dca5cf492ee",
+        "workchainID": "0",
+        "startBlock": "3"
+      }
+    }, {
+      "name": "sub",
+      "type": "substrate",
+      "id": "1",
+      "endpoint": "ws://localhost:9944",
+      "from": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+      "opts": {
+        "useExtendedCall": "true",
+        "startBlock": "1"
+      }
+    }
+  ]
+}

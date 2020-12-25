@@ -28,6 +28,7 @@ nav:
     - CLI Options: cli-options.md
   - Specification:
       - ChainBridge: spec.md
+      - TON: chains/ton.md
       - Substrate: chains/substrate.md
   - Running Locally: local.md
 
