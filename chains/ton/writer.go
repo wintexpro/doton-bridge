@@ -54,8 +54,8 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 	}
 }
 
-func MessageCallback(event *client.ProcessingEvent) {
-	fmt.Printf("MessageID: %s", event.MessageID)
+func (w *writer) MessageCallback(event *client.ProcessingEvent) {
+	w.log.Debug("MessageID: %s", event.MessageID)
 }
 
 var SimpleMessageResourceIDAsSrt = "0x000000000000000000000053696d706c654d6573736167655265736f75726365"
@@ -105,7 +105,6 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 
 	res, err := w.conn.Client().AbiEncodeMessage(&params)
 	if err != nil {
-		fmt.Printf("Error: %s", err)
 		w.sysErr <- fmt.Errorf("failed to construct proposal (chain=%d) Error: %w", m.Destination, err)
 		return false
 	}
@@ -115,14 +114,11 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 		Abi:     &relayerABI,
 	}
 
-	result, err := w.conn.Client().ProcessingSendMessage(&sparams, MessageCallback)
+	_, err = w.conn.Client().ProcessingSendMessage(&sparams, w.MessageCallback)
 	if err != nil {
-		fmt.Printf("Error: %s", err)
 		w.sysErr <- fmt.Errorf("failed to send proposal (chain=%d) Error: %w", m.Destination, err)
 		return false
 	}
-
-	fmt.Printf("Result: %v\n", result)
 
 	return false
 }

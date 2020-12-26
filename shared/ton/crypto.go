@@ -181,7 +181,6 @@ func DeriveRelayerAddress(contractsPath string, keys client.KeyPair) string {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("\n\nAddress: %s \n\n", res.Address)
 
 	return res.Address
 }
