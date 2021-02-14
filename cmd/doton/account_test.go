@@ -15,11 +15,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/radianceteam/ton-client-go/client"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 	"github.com/wintexpro/chainbridge-utils/crypto"
-	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	"github.com/wintexpro/chainbridge-utils/keystore"
 )
 
@@ -378,42 +376,42 @@ func TestListKeys(t *testing.T) {
 	}
 }
 
-func TestDeriveAndImportTonKey(t *testing.T) {
-	keyfile, err := importTonPrivKey(testKeystoreDir, testSeedPhrase, testPassword)
-	if err != nil {
-		t.Fatal(err)
-	}
+// func TestDeriveAndImportTonKey(t *testing.T) {
+// 	keyfile, err := importTonPrivKey(testKeystoreDir, testSeedPhrase, testPassword)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	keys, err := listKeys(testKeystoreDir)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	keys, err := listKeys(testKeystoreDir)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	defer os.RemoveAll(testKeystoreDir)
+// 	defer os.RemoveAll(testKeystoreDir)
 
-	if len(keys) != 1 {
-		t.Fatal("fail")
-	}
+// 	if len(keys) != 1 {
+// 		t.Fatal("fail")
+// 	}
 
-	if strings.Compare(keys[0], filepath.Base(keyfile)) != 0 {
-		t.Fatalf("Fail: got %s expected %s", keys[0], keyfile)
-	}
-}
+// 	if strings.Compare(keys[0], filepath.Base(keyfile)) != 0 {
+// 		t.Fatalf("Fail: got %s expected %s", keys[0], keyfile)
+// 	}
+// }
 
-func TestDeriveSenderAddress(t *testing.T) {
-	kp, err := ed25519.NewKeypairFromSeed(testSeedPhrase)
-	if err != nil {
-		t.Fatal(err)
-	}
+// func TestDeriveSenderAddress(t *testing.T) {
+// 	kp, err := ed25519.NewKeypairFromSeed(testSeedPhrase)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	keys := client.KeyPair{
-		Public: kp.PublicKey(),
-		Secret: kp.SecretKey(),
-	}
+// 	keys := client.KeyPair{
+// 		Public: kp.PublicKey(),
+// 		Secret: kp.SecretKey(),
+// 	}
 
-	address := deriveSenderAddress(keys)
+// 	address := deriveSenderAddress(keys)
 
-	if address != "0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f" {
-		t.Fatalf("address is not correct: %#v", kp.PublicKey())
-	}
-}
+// 	if address != "0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f" {
+// 		t.Fatalf("address is not correct: %#v", kp.PublicKey())
+// 	}
+// }

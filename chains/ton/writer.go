@@ -5,8 +5,12 @@ package ton
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"math/big"
+	"strconv"
 
+	. "github.com/ChainSafe/ChainBridge/tonbindings"
 	"github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/radianceteam/ton-client-go/client"
@@ -19,7 +23,9 @@ import (
 
 var _ core.Writer = &writer{}
 
-const Relayer = "Relayer"
+const RelayerContractKey = "Relayer"
+const RootTokenContractKey = "RootToken"
+const MessageHandlerContractKey = "MessageHandler"
 
 type writer struct {
 	cfg     Config
@@ -30,16 +36,50 @@ type writer struct {
 	sysErr  chan<- error // Reports fatal error to core
 	metrics *metrics.ChainMetrics
 	abi     map[string]client.Abi
-	tvc     map[string]string
+	relayer *RelayerContract
 }
 
 // NewWriter creates and returns writer
 func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypair, stop <-chan int, sysErr chan<- error, m *metrics.ChainMetrics) *writer {
 	abi := make(map[string]client.Abi)
-	tvc := make(map[string]string)
 
-	abi[Relayer] = LoadAbi(cfg.contractsPath, Relayer)
-	tvc[Relayer] = LoadTvc(cfg.contractsPath, Relayer)
+	workchainID, err := strconv.ParseInt(cfg.workchainID, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	signer := client.Signer{
+		Type: client.KeysSignerType,
+		Keys: client.KeyPair{
+			Public: kp.PublicKey(),
+			Secret: kp.SecretKey(),
+		},
+	}
+
+	ctx := ContractContext{
+		Conn:        conn.Client(),
+		Signer:      &signer,
+		WorkchainID: null.Int32From(int32(workchainID)),
+	}
+
+	rootTokenContract := RootTokenContract{Ctx: ctx}
+	messageHandlerContract := MessageHandler{Ctx: ctx}
+	relayerContract := Relayer{Ctx: ctx}
+
+	abiRootTokenContract, err := rootTokenContract.Abi()
+	if err != nil {
+		panic(err)
+	}
+
+	abiMessageHandler, err := messageHandlerContract.Abi()
+	if err != nil {
+		panic(err)
+	}
+
+	abi[RootTokenContractKey] = *abiRootTokenContract
+	abi[MessageHandlerContractKey] = *abiMessageHandler
+
+	relayer, err := relayerContract.New(cfg.from)
 
 	return &writer{
 		cfg:     *cfg,
@@ -50,7 +90,7 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 		sysErr:  sysErr,
 		metrics: m,
 		abi:     abi,
-		tvc:     tvc,
+		relayer: relayer,
 	}
 }
 
@@ -58,67 +98,84 @@ func (w *writer) MessageCallback(event *client.ProcessingEvent) {
 	w.log.Debug("MessageID: %s", event.MessageID)
 }
 
-var SimpleMessageResourceIDAsSrt = "0x000000000000000000000053696d706c654d6573736167655265736f75726365"
-
 // ResolveMessage handles any given message based on type
 // A bool is returned to indicate failure/success, this should be ignored except for within tests.
 func (w *writer) ResolveMessage(m msg.Message) bool {
 	w.log.Info("Attempting to resolve message", "type", m.Type, "src", m.Source, "dst", m.Destination, "nonce", m.DepositNonce, "rId", m.ResourceId.Hex())
 
-	address := null.NewString(w.cfg.from, true)
+	var data string
 
-	keys := client.KeyPair{
-		Public: w.kp.PublicKey(),
-		Secret: w.kp.SecretKey(),
+	switch m.Type {
+	case msg.FungibleTransfer:
+		amount := new(big.Int).SetBytes(m.Payload[0].([]byte))
+		input, err := json.Marshal(map[string]interface{}{
+			"to":     string(m.Payload[1].([]byte)),
+			"tokens": amount.String(),
+		})
+		if err != nil {
+			w.log.Error("failed to construct FungibleTransfer data", "chainId", m.Destination, "error", err)
+			return false
+		}
+
+		paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
+			Abi:        w.abi[RootTokenContractKey],
+			Signer:     *w.relayer.Ctx.Signer,
+			IsInternal: true,
+			CallSet: client.CallSet{
+				FunctionName: "grant",
+				Input:        input,
+			},
+		}
+
+		resultOfEncodeMessageBody, err := w.conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
+		if err != nil {
+			w.log.Error("failed to construct encode FungibleTransfer data", "chainId", m.Destination, "error", err)
+			return false
+		}
+
+		data = resultOfEncodeMessageBody.Body
+	case SimpleMessageTransfer:
+		messageType := "0x" + hex.EncodeToString(m.ResourceId[:])
+		dataStr := "0x" + hex.EncodeToString([]byte(m.Payload[1].(types.Text)))
+
+		input, err := json.Marshal(map[string]interface{}{
+			"chainId":     m.Destination,
+			"nonce":       m.DepositNonce,
+			"messageType": messageType,
+			"data":        dataStr,
+		})
+
+		if err != nil {
+			w.log.Error("failed to construct SimpleMessageTransfer data", "chainId", m.Destination, "error", err)
+			return false
+		}
+		paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
+			Abi:    w.abi[MessageHandlerContractKey],
+			Signer: *w.relayer.Ctx.Signer,
+			CallSet: client.CallSet{
+				FunctionName: "receiveMessage",
+				Input:        input,
+			},
+		}
+
+		resultOfEncodeMessageBody, err := w.conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
+		if err != nil {
+			w.log.Error("failed to encode SimpleMessageTransfer data", "chainId", m.Destination, "error", err)
+			return false
+		}
+
+		data = resultOfEncodeMessageBody.Body
 	}
 
-	relayerABI := LoadAbi(w.cfg.contractsPath, "Relayer")
+	messageType := "0x" + hex.EncodeToString(m.ResourceId[:])
 
-	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: keys,
-	}
-
-	randomKeys, err := ed25519.GenerateKeypair()
+	shardBlockID, err := w.relayer.VoteThroughBridge("1", fmt.Sprint(m.Destination), messageType, fmt.Sprint(m.DepositNonce), data).Send(w.MessageCallback)
 	if err != nil {
+		w.log.Error("failed to construct proposal", "chainId", m.Destination, "error", err)
 		return false
 	}
 
-	callSet := client.CallSet{
-		FunctionName: "voteThroughBridge",
-		Input: map[string]interface{}{
-			"choice":            uint8(1),
-			"chainId":           m.Destination,
-			"messageType":       null.StringFrom(SimpleMessageResourceIDAsSrt),
-			"nonce":             m.DepositNonce,
-			"data":              null.StringFrom("0x" + hex.EncodeToString([]byte(m.Payload[0].(types.Text)))),
-			"proposalPublicKey": null.StringFrom("0x" + randomKeys.PublicKey()),
-		},
-	}
+	w.log.Info("Attemping to send proposal", "ShardBlockID", shardBlockID)
 
-	params := client.ParamsOfEncodeMessage{
-		Abi:     relayerABI,
-		Address: address,
-		CallSet: &callSet,
-		Signer:  signer,
-	}
-
-	res, err := w.conn.Client().AbiEncodeMessage(&params)
-	if err != nil {
-		w.sysErr <- fmt.Errorf("failed to construct proposal (chain=%d) Error: %w", m.Destination, err)
-		return false
-	}
-
-	sparams := client.ParamsOfSendMessage{
-		Message: res.Message,
-		Abi:     &relayerABI,
-	}
-
-	_, err = w.conn.Client().ProcessingSendMessage(&sparams, w.MessageCallback)
-	if err != nil {
-		w.sysErr <- fmt.Errorf("failed to send proposal (chain=%d) Error: %w", m.Destination, err)
-		return false
-	}
-
-	return false
+	return true
 }

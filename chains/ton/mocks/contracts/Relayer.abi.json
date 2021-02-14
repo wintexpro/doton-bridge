@@ -29,8 +29,7 @@
 				{"name":"chainId","type":"uint8"},
 				{"name":"messageType","type":"uint256"},
 				{"name":"nonce","type":"uint64"},
-				{"name":"data","type":"uint256"},
-				{"name":"proposalPublicKey","type":"uint256"}
+				{"name":"data","type":"cell"}
 			],
 			"outputs": [
 			]

@@ -49,7 +49,7 @@ func (c *Connection) Connect() error {
 	c.log.Info("Connecting to ton chain...", "url", c.endpoint)
 
 	conn, err := client.NewClient(client.Config{
-		Network: &client.NetworkConfig{ServerAddress: c.endpoint},
+		Network: &client.NetworkConfig{ServerAddress: null.StringFrom(c.endpoint)},
 	})
 	if err != nil {
 		return err

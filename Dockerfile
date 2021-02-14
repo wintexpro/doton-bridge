@@ -17,7 +17,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN && \
 	rustup default $RUST_TOOLCHAIN && \
 	rustup default stable
-RUN git clone --depth 1 --branch 1.1.1 https://github.com/tonlabs/TON-SDK.git && \
+RUN git clone --depth 1 --branch 1.8.0 https://github.com/tonlabs/TON-SDK.git && \
   export PATH="$PATH:$HOME/.cargo/bin" && \
   cd TON-SDK && \
   cargo build "--$PROFILE"

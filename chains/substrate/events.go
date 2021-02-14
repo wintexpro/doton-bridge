@@ -116,6 +116,7 @@ func simpleMessageHandler(evtI interface{}, log log15.Logger) (msg.Message, erro
 		DepositNonce: msg.Nonce(evt.Nonce),
 		ResourceId:   msg.ResourceId(SimpleMessageResourceID),
 		Payload: []interface{}{
+			evt.From,
 			evt.Message,
 		},
 	}

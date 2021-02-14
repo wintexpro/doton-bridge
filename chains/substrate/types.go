@@ -4,7 +4,6 @@
 package substrate
 
 import (
-	"encoding/json"
 	"math/big"
 
 	"github.com/centrifuge/go-substrate-rpc-client/scale"
@@ -13,8 +12,8 @@ import (
 )
 
 type SimpleMessagePayload struct {
-	From    string `json:"from"`
-	Message string `json:"message"`
+	From    string
+	Message types.Text
 }
 
 type voteState struct {
@@ -147,9 +146,10 @@ func (w *writer) createSimpleMessageProposal(m msg.Message) (*proposal, error) {
 		return nil, err
 	}
 
-	payload := SimpleMessagePayload{}
-
-	json.Unmarshal(m.Payload[0].([]byte), &payload)
+	payload := SimpleMessagePayload{
+		From:    m.Payload[0].(string),
+		Message: m.Payload[1].(types.Text),
+	}
 
 	call, err := types.NewCall(
 		&meta,

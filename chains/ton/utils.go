@@ -16,8 +16,6 @@ import (
 	"github.com/volatiletech/null"
 )
 
-type Message = map[string]interface{}
-
 func LoadAbi(path, name string) client.Abi {
 	content, err := ioutil.ReadFile(path + "/" + name + ".abi.json")
 	if err != nil {
@@ -81,18 +79,23 @@ func GetBlock(c *client.Client, blockNumber *big.Int, workchainID string) (*conn
 	return currentBlock, nil
 }
 
-func DecodeMessageBody(c *client.Client, message *Message, abi client.Abi) (*client.DecodedMessageBody, error) {
+func DecodeMessageBody(c *client.Client, message *json.RawMessage, abi client.Abi) (*client.DecodedMessageBody, error) {
+	msg, err := message.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
 	params := client.ParamsOfDecodeMessageBody{
 		Abi:  abi,
-		Body: ((*message)["body"]).(string),
+		Body: string(msg),
 	}
 
 	return c.AbiDecodeMessageBody(&params)
 }
 
-func GetMessage(c *client.Client, address string, prevBlock, currentBlock *connection.BlockType) (*[]Message, error) {
-	messages := []Message{}
-
+func GetMessage(c *client.Client, address string, prevBlock, currentBlock *connection.BlockType) (*[]json.RawMessage, error) {
+	messages := []json.RawMessage{}
+	// FIXME: receive dst_transaction and check aborted field
 	params := client.ParamsOfQueryCollection{
 		Collection: "messages",
 		Result:     "id status created_at body src",
@@ -116,7 +119,7 @@ func GetMessage(c *client.Client, address string, prevBlock, currentBlock *conne
 	}
 
 	for _, s := range res.Result {
-		messages = append(messages, s.(Message))
+		messages = append(messages, s)
 	}
 
 	return &messages, nil

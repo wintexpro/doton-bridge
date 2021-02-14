@@ -55,6 +55,11 @@ You will need to add these definitions to the [developer settings](https://polka
     "votes_against": "Vec<AccountId>",
     "status": "enum"
   },
+  "Erc721Token": {
+    "id": "TokenId",
+    "metadata": "Vec<u8>"
+  },
+  "TokenId": "U256",
   "Address": "AccountId",
   "LookupSource": "AccountId"
 }
@@ -146,10 +151,10 @@ module.exports = {
     },
   },
   polkadotjs: {
-    types: { // substrate custom types (defined bellow)
+    types: {
       "Message": "Text",
-      "ExtAddress": "Text",
       "chainbridge::ChainId": "u8",
+      "ExtAddress": "Text",
       "ChainId": "u8",
       "ResourceId": "[u8; 32]",
       "Nonce": "u64",
@@ -159,6 +164,11 @@ module.exports = {
         "votes_against": "Vec<AccountId>",
         "status": "enum"
       },
+      "Erc721Token": {
+        "id": "TokenId",
+        "metadata": "Vec<u8>"
+      },
+      "TokenId": "U256",
       "Address": "AccountId",
       "LookupSource": "AccountId"
     }

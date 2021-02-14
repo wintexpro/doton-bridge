@@ -4,6 +4,7 @@
 package ton
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -28,6 +29,14 @@ type listener struct {
 	stop        <-chan int
 	sysErr      chan<- error
 	abi         map[string]client.Abi
+}
+
+type Message struct {
+	ID        string  `json:"id"`
+	Status    int8    `json:"status"`
+	CreatedAt big.Int `json:"created_at"`
+	Body      string  `json:"body"`
+	Src       string  `json:"src"`
 }
 
 // Frequency of polling for a new block
@@ -159,13 +168,31 @@ func (l *listener) processEvents(prevBlock, currentBlock *ton.BlockType) error {
 		}
 
 		// Handle founded messages
-		for _, message := range *messages {
-			body, err := DecodeMessageBody(l.conn.Client(), &message, l.abi[subscription.abiName])
+		for _, rawMessage := range *messages {
+			message := Message{}
+
+			err := json.Unmarshal(rawMessage, &message)
 			if err != nil {
 				return err
 			}
 
-			l.submitMessage(subscription.handler(message, body, l.log))
+			rawBody := json.RawMessage(message.Body)
+
+			l.log.Debug(fmt.Sprintf("Attemping decode message: %#v", message))
+
+			bodyRaw, err := DecodeMessageBody(l.conn.Client(), &rawBody, l.abi[subscription.abiName])
+			if err != nil {
+				return err
+			}
+
+			msg, err := subscription.handler(message, bodyRaw.Value, l.log)
+
+			if err != nil {
+				log15.Error("Critical error processing event", "err", err)
+				return err
+			}
+
+			l.submitMessage(msg)
 		}
 	}
 
@@ -173,14 +200,11 @@ func (l *listener) processEvents(prevBlock, currentBlock *ton.BlockType) error {
 }
 
 // submitMessage inserts the chainId into the msg and sends it to the router
-func (l *listener) submitMessage(m msg.Message, err error) {
-	if err != nil {
-		log15.Error("Critical error processing event", "err", err)
-		return
-	}
-
+func (l *listener) submitMessage(m *msg.Message) {
 	m.Source = l.cfg.id
-	err = l.router.Send(m)
+
+	err := l.router.Send(*m)
+
 	if err != nil {
 		log15.Error("failed to process event", "err", err)
 	}

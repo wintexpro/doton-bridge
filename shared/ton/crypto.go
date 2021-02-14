@@ -159,15 +159,22 @@ func DeriveRelayerAddress(contractsPath string, keys client.KeyPair) string {
 		WorkchainID: null.NewInt32(0, true),
 	}
 
+	input := map[string]interface{}{
+		// ignore this args
+		"_accessControllerAddress": null.StringFrom("0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f"),
+		"_myPublicKey":             null.StringFrom("0x" + keys.Public),
+		"_myInitState":             null.StringFrom(RelayerTVC),
+		"_bridgeAddress":           null.StringFrom("0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f"),
+	}
+
+	inputStr, err := json.Marshal(input)
+	if err != nil {
+		panic(err)
+	}
+
 	callSet := client.CallSet{
 		FunctionName: "constructor",
-		Input: map[string]interface{}{
-			// ignore this args
-			"_accessControllerAddress": null.StringFrom("0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f"),
-			"_myPublicKey":             null.StringFrom("0x" + keys.Public),
-			"_myInitState":             null.StringFrom(RelayerTVC),
-			"_bridgeAddress":           null.StringFrom("0:164d61e6cad0597545cb8ab98ecfdb2a29e0cc55d484daece02c63d8511e9a5f"),
-		},
+		Input:        inputStr,
 	}
 
 	params := client.ParamsOfEncodeMessage{
