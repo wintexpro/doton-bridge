@@ -5,6 +5,7 @@ package ton
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"os"
@@ -35,14 +36,14 @@ func TestTonChain(t *testing.T) {
 		Id:             msg.ChainId(1),
 		Name:           "alice",
 		Endpoint:       "http://localhost",
-		From:           "0:e8bc02f9e8e56c04d9248743cfed5b8c3a0d6b5171f7fcf083a0dd206f847891",
+		From:           "0:2089148264fb4b40dbb9ed7ba7a862403a715abf50a5730637da33d4b6453dd2",
 		Insecure:       false,
 		KeystorePath:   dir + "/../../keys",
 		BlockstorePath: "",
 		FreshStart:     true,
 		Opts: map[string]string{
 			"contractsPath": dir + "/mocks/contracts",
-			"receiver":      "0:21235dbf90a09dc61d5389545530613c1fa02f9cc7cf596988cf4a215f8e9220",
+			"receiver":      "0:1ba93200aa73341512bb7d406ccc3bae38b79628ef3fdcccd9ce2e0a133b1387",
 			"startBlock":    "3",
 			"workchainID":   "0",
 		},
@@ -92,7 +93,7 @@ func TestTonChain(t *testing.T) {
 	var (
 		accessControllerAddress, senderAddress, tip3HandlerAddress, tonTokenWalletAddress,
 		bridgeAddress, relayerAddress, receiverAddress, bridgeVoteControllerAddress, messageHandlerAddress,
-		rootTokenContractAddress string
+		burnedTokensHandlerAddress, rootTokenContractAddress string
 	)
 
 	giver, err := NewGiver(chain.conn.Client(), signer, workchainID)
@@ -117,6 +118,7 @@ func TestTonChain(t *testing.T) {
 	rootTokenContract := RootTokenContract{Ctx: ctx}
 	tonTokenWalletContract := TONTokenWallet{Ctx: ctx}
 	messageHandlerContract := MessageHandler{Ctx: ctx}
+	burnedTokensHandlerContract := BurnedTokensHandler{Ctx: ctx}
 
 	walletCode, err := tonTokenWalletContract.Code()
 	if err != nil {
@@ -128,6 +130,9 @@ func TestTonChain(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if burnedTokensHandlerAddress, err = burnedTokensHandlerContract.Address(); err != nil {
+		t.Fatal(err)
+	}
 	if senderAddress, err = senderContract.Address(); err != nil {
 		t.Fatal(err)
 	}
@@ -178,17 +183,21 @@ func TestTonChain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("senderAddress: %s \n", senderAddress)
-	fmt.Printf("receiverAddress: %s \n", receiverAddress)
-	fmt.Printf("accessControllerAddress: %s \n", accessControllerAddress)
-	fmt.Printf("bridgeVoteControllerAddress: %s \n", bridgeVoteControllerAddress)
-	fmt.Printf("bridgeAddress: %s \n", bridgeAddress)
-	fmt.Printf("relayerAddress: %s \n", relayerAddress)
-	fmt.Printf("rootTokenContractAddress: %s \n", rootTokenContractAddress)
-	fmt.Printf("tip3HandlerAddress: %s \n", tip3HandlerAddress)
-	fmt.Printf("messageHandlerAddress: %s \n", messageHandlerAddress)
-	fmt.Printf("tonTokenWalletAddress: %s \n", tonTokenWalletAddress)
+	fmt.Printf("sender: %s \n", senderAddress)
+	fmt.Printf("receiver: %s \n", receiverAddress)
+	fmt.Printf("accessController: %s \n", accessControllerAddress)
+	fmt.Printf("bridgeVoteController: %s \n", bridgeVoteControllerAddress)
+	fmt.Printf("bridge: %s \n", bridgeAddress)
+	fmt.Printf("relayer: %s \n", relayerAddress)
+	fmt.Printf("rootTokenContract: %s \n", rootTokenContractAddress)
+	fmt.Printf("tip3Handler: %s \n", tip3HandlerAddress)
+	fmt.Printf("messageHandler: %s \n", messageHandlerAddress)
+	fmt.Printf("tonTokenWallet: %s \n", tonTokenWalletAddress)
+	fmt.Printf("burnedTokensHandler: %s \n", burnedTokensHandlerAddress)
 
+	if _, err = giver.SendGrams(burnedTokensHandlerAddress, big.NewInt(500000000000), messageCallback); err != nil {
+		t.Fatal(err)
+	}
 	if _, err = giver.SendGrams(accessControllerAddress, big.NewInt(500000000000), messageCallback); err != nil {
 		t.Fatal(err)
 	}
@@ -292,6 +301,16 @@ func TestTonChain(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var burnedTokensHandler *BurnedTokensHandlerContract
+	if burnedTokensHandler, err = burnedTokensHandlerContract.Deploy(
+		&BurnedTokensHandlerDeployParams{
+			Tip3RootAddress: rootTokenContractAddress,
+		},
+		messageCallback,
+	); err != nil {
+		t.Fatal(err)
+	}
+
 	var rootToken *RootTokenContractContract
 	if rootToken, err = rootTokenContract.Deploy(rootTokenContractInitVars, messageCallback); err != nil {
 		t.Fatal(err)
@@ -303,6 +322,10 @@ func TestTonChain(t *testing.T) {
 	if wallet, err = tonTokenWalletContract.Deploy(tonTokenWalletInitVars, messageCallback); err != nil {
 		t.Fatal(err)
 	}
+
+	resDeployWallet, err := rootToken.DeployWallet("1000", "1000000000", "0x"+signer.Keys.Public, "0:0000000000000000000000000000000000000000000000000000000000000000", rootTokenContractAddress).Send(messageCallback)
+
+	fmt.Printf("\n\n DeployWallet: %#v \n\n", resDeployWallet)
 
 	time.Sleep(time.Second * 10)
 
@@ -373,7 +396,7 @@ func TestTonChain(t *testing.T) {
 
 	m = msg.NewFungibleTransfer(
 		msg.ChainId(1), msg.ChainId(1), msg.Nonce(1), big.NewInt(1000),
-		Tip3ResourceID, []byte("0:5ce502787cc360dabd569bf9e26c66c88a4264149501b52419564d05d83b4aff"),
+		Tip3ResourceID, []byte("0:61725953ea3aa24fb7d7ae01a736c3668a2cf17afd0ef0eeef1dea190c0f4a1c"),
 	)
 
 	if chain.writer.ResolveMessage(m) {
@@ -402,6 +425,44 @@ func TestTonChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Printf("\n\n balance:: %s \n\n", balance)
+
+	messageType := "0x" + hex.EncodeToString(Tip3ResourceID[:])
+
+	input, err := json.Marshal(map[string]interface{}{
+		"destinationChainID": "0x1",
+		"resourceID":         messageType,
+		"depositNonce":       "0x1",
+		"amount":             "0x258",
+		"recipient":          "0xbc5531e87959d836550577fb7e6df9c0546686f9c11c39fe1355490edbf86173",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
+		Abi:        burnedTokensHandler.Abi,
+		Signer:     *burnedTokensHandler.Ctx.Signer,
+		IsInternal: true,
+		CallSet: client.CallSet{
+			FunctionName: "deposit",
+			Input:        input,
+		},
+	}
+
+	resultOfEncodeMessageBody, err := chain.conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = wallet.BurnByOwner("500", "100000000", burnedTokensHandlerAddress, resultOfEncodeMessageBody.Body).Send(messageCallback)
+
+	time.Sleep(time.Second * 5)
+
+	balance, err = wallet.GetBalance().Call()
+	fmt.Printf("\n balance: %s\n\n", balance)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	chain.conn.Client().Close()
 }

@@ -3,6 +3,7 @@ package tonbindings
 import (
 	"encoding/json"
 	"fmt"
+
 	client "github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 )
