@@ -3,13 +3,14 @@ package tonbindings
 import (
 	"encoding/json"
 	"fmt"
+
 	client "github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 )
 
 const (
 	BurnedTokensHandlerAbi = "{\"ABI version\":2,\"data\":[],\"events\":[{\"inputs\":[{\"name\":\"destinationChainID\",\"type\":\"uint8\"},{\"name\":\"resourceID\",\"type\":\"uint256\"},{\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"name\":\"amount\",\"type\":\"uint128\"},{\"name\":\"recipient\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"outputs\":[]}],\"functions\":[{\"inputs\":[{\"name\":\"_tip3RootAddress\",\"type\":\"address\"}],\"name\":\"constructor\",\"outputs\":[]},{\"inputs\":[{\"name\":\"tokens\",\"type\":\"uint128\"},{\"name\":\"payload\",\"type\":\"cell\"},{\"name\":\"sender_public_key\",\"type\":\"uint256\"},{\"name\":\"sender_address\",\"type\":\"address\"},{\"name\":\"wallet_address\",\"type\":\"address\"}],\"name\":\"burnCallback\",\"outputs\":[]},{\"inputs\":[{\"name\":\"destinationChainID\",\"type\":\"uint8\"},{\"name\":\"resourceID\",\"type\":\"uint256\"},{\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"name\":\"amount\",\"type\":\"uint128\"},{\"name\":\"recipient\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[]}],\"header\":[\"time\"]}"
-	BurnedTokensHandlerTvc = "te6ccgECEwEAAxYAAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAib/APSkICLAAZL0oOGK7VNYMPShCAQBCvSkIPShBQIJngAAAAoHBgApTtRNDT/9M/0wD4an/4Yfhm+GP4YoAC1fhCyMv/+EPPCz/4Rs8LAPhKAc7J7VSAIBIAwJAYj/f40IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhpIe1E0CDXScIBjhHT/9M/0wD4an/4Yfhm+GP4YgoB/I4+9AWNCGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT4anABgED0DvK91wv/+GJw+GNw+GZ/+GHi0wABn4ECANcYIPkBWPhC+RDyqN7TPwGOHfhDIbkgnzAg+COBA+iogggbd0Cgud6S+GPgMPI02NMfIcEDIgsAMIIQ/////byxk1vyPOAB8AH4R26TMPI83gIBIBINAgEgDw4At7sd0ndPhBbpLwCt7Tf9TT//pBldTR0PpA3/pBldTR0PpA39H4SfhKxwXy4GT4KMjPhQjOjQRQF9eEAAAAAAAAAAAAAAAAAAHPFs+Bz4MkzxTJcPsAXwXwCX/4Z4AgEgERAA5blCYSdaYPp/+mf64a/yupo6Gm/7+uG/8rqaOhp/+/o/CT9ITeJ64X//BR9ITeJ64X/3XlwMmRF7gAAAAAAAAAAAAAAABBni2fA58DnyH50ISMS54WDkmeF/5HnhZ+RZ4W/kOeF/+S4/YAvgsl4BO8//DPAA97jqypufCC3Ry52omgQa6ThAMcI6f/pn+mAfDU//DD8M3wx/DFHH3oCxoQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACfDU4AMAgegd5XuuF//wxOHwxuHwzP/ww8W98I3k5uPwzfSBo/AAQfDUYeAS//DPAAkN5wItDTA/pAMPhpqTgA+ER/b3GCCJiWgG9ybW9zcW90+GTcIccA3CHTHyHdIcEDIoIQ/////byxk1vyPOAB8AH4R26TMPI83g=="
+	BurnedTokensHandlerTvc = "te6ccgECEwEAAysAAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAib/APSkICLAAZL0oOGK7VNYMPShCAQBCvSkIPShBQIJngAAAAoHBgApTtRNDT/9M/0wD4an/4Yfhm+GP4YoAC1fhCyMv/+EPPCz/4Rs8LAPhKAc7J7VSAIBIAwJAYj/f40IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhpIe1E0CDXScIBjhHT/9M/0wD4an/4Yfhm+GP4YgoB/I4+9AWNCGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT4anABgED0DvK91wv/+GJw+GNw+GZ/+GHi0wABn4ECANcYIPkBWPhC+RDyqN7TPwGOHfhDIbkgnzAg+COBA+iogggbd0Cgud6S+GPgMPI02NMfIcEDIgsAMIIQ/////byxk1vyPOAB8AH4R26TMPI83gIBIBINAgEgDw4A4bsd0ndPhBbpLwCt7Tf9TT//pBldTR0PpA3/pBldTR0PpA39H4SfhKxwXy4GQj0NMf0wfT/9M/03/T/zAqIrry4Gf4KMjPhQjOjQRQF9eEAAAAAAAAAAAAAAAAAAHPFs+Bz4MqzxTJcPsAXwvwCX/4Z4AgEgERAA5blCYSdaYPp/+mf64a/yupo6Gm/7+uG/8rqaOhp/+/o/CT9ITeJ64X//BR9ITeJ64X/3XlwMmRF7gAAAAAAAAAAAAAAABBni2fA58DnyH50ISMS54WDkmeF/5HnhZ+RZ4W/kOeF/+S4/YAvgsl4BO8//DPAA97jqypufCC3Ry52omgQa6ThAMcI6f/pn+mAfDU//DD8M3wx/DFHH3oCxoQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACfDU4AMAgegd5XuuF//wxOHwxuHwzP/ww8W98I3k5uPwzfSBo/AAQfDUYeAS//DPAAkN5wItDTA/pAMPhpqTgA+ER/b3GCCJiWgG9ybW9zcW90+GTcIccA3CHTHyHdIcEDIoIQ/////byxk1vyPOAB8AH4R26TMPI83g=="
 )
 
 type BurnedTokensHandlerContract struct {
@@ -41,6 +42,20 @@ func (c *BurnedTokensHandler) Address() (string, error) {
 		return "", err
 	}
 	return encodeMessage.Address, nil
+}
+func (c *BurnedTokensHandler) DecodeMessageBody(body string, isInternal bool) (*client.DecodedMessageBody, error) {
+	abi, err := c.Abi()
+	if err != nil {
+		return nil, err
+	}
+
+	params := client.ParamsOfDecodeMessageBody{
+		Abi:        *abi,
+		Body:       body,
+		IsInternal: isInternal,
+	}
+
+	return c.Ctx.Conn.AbiDecodeMessageBody(&params)
 }
 func (c *BurnedTokensHandler) New(address string) (*BurnedTokensHandlerContract, error) {
 	abi, err := c.Abi()

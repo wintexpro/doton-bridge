@@ -104,6 +104,27 @@ var accountCommand = cli.Command{
 	},
 }
 
+var deployCommand = cli.Command{
+	Name: "contracts",
+	Subcommands: []*cli.Command{
+		{
+			Action: wrapHandler(handleSendGrams),
+			Name:   "sendGrams",
+			Usage:  "send grams from the giver to the contracts",
+		},
+		{
+			Action: wrapHandler(handleDeployCmd),
+			Name:   "deploy",
+			Usage:  "deploy the set of ton contracts",
+		},
+		{
+			Action: wrapHandler(handleSetupCmd),
+			Name:   "setup",
+			Usage:  "setup contracts of brige",
+		},
+	},
+}
+
 var (
 	Version = "0.0.1"
 )
@@ -119,6 +140,7 @@ func init() {
 	app.EnableBashCompletion = true
 	app.Commands = []*cli.Command{
 		&accountCommand,
+		&deployCommand,
 	}
 
 	app.Flags = append(app.Flags, cliFlags...)

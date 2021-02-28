@@ -117,12 +117,17 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 			return false
 		}
 
+		fmt.Printf("\n\n input: %#v \n\n", map[string]interface{}{
+			"to":     string(m.Payload[1].([]byte)),
+			"tokens": amount.String(),
+		})
+
 		paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
 			Abi:        w.abi[RootTokenContractKey],
 			Signer:     *w.relayer.Ctx.Signer,
 			IsInternal: true,
 			CallSet: client.CallSet{
-				FunctionName: "grant",
+				FunctionName: "mint",
 				Input:        input,
 			},
 		}
@@ -139,6 +144,13 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 		dataStr := "0x" + hex.EncodeToString([]byte(m.Payload[1].(types.Text)))
 
 		input, err := json.Marshal(map[string]interface{}{
+			"chainId":     m.Destination,
+			"nonce":       m.DepositNonce,
+			"messageType": messageType,
+			"data":        dataStr,
+		})
+
+		fmt.Printf("\n\n input: %#v \n\n", map[string]interface{}{
 			"chainId":     m.Destination,
 			"nonce":       m.DepositNonce,
 			"messageType": messageType,
@@ -169,6 +181,7 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 
 	messageType := "0x" + hex.EncodeToString(m.ResourceId[:])
 
+	//FIXME: Check is proposal valid
 	shardBlockID, err := w.relayer.VoteThroughBridge("1", fmt.Sprint(m.Destination), messageType, fmt.Sprint(m.DepositNonce), data).Send(w.MessageCallback)
 	if err != nil {
 		w.log.Error("failed to construct proposal", "chainId", m.Destination, "error", err)

@@ -69,6 +69,20 @@ func (c *Relayer) New(address string) (*RelayerContract, error) {
 	}
 	return &contract, nil
 }
+func (c *Relayer) DecodeMessageBody(body string, isInternal bool) (*client.DecodedMessageBody, error) {
+	abi, err := c.Abi()
+	if err != nil {
+		return nil, err
+	}
+
+	params := client.ParamsOfDecodeMessageBody{
+		Abi:        *abi,
+		Body:       body,
+		IsInternal: isInternal,
+	}
+
+	return c.Ctx.Conn.AbiDecodeMessageBody(&params)
+}
 func (c *Relayer) DeployEncodeMessage(relayerDeployParams *RelayerDeployParams) (*client.ResultOfEncodeMessage, error) {
 	abi, err := c.Abi()
 	if err != nil {
@@ -137,9 +151,6 @@ func (contract *RelayerContract) BridgeSetHandler(messageType string, handlerAdd
 }
 func (contract *RelayerContract) VoteThroughBridge(choice string, chainId string, messageType string, nonce string, data string) *ContractMethod {
 	input := fmt.Sprintf("{\"choice\": \"%s\" ,\"chainId\": \"%s\" ,\"messageType\": \"%s\" ,\"nonce\": \"%s\" ,\"data\": \"%s\" }", choice, chainId, messageType, nonce, data)
-	fmt.Print("\n ------------ \n")
-	fmt.Print(input)
-	fmt.Print("\n ------------ \n")
 	return contract.CallContractMethod("voteThroughBridge", input)
 }
 func (contract *RelayerContract) UpdateValueForChangeRole(newValue string) *ContractMethod {

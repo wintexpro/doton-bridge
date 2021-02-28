@@ -3,6 +3,7 @@ package tonbindings
 import (
 	"encoding/json"
 	"fmt"
+
 	client "github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 )
@@ -35,6 +36,20 @@ func (c *Bridge) Abi() (*client.Abi, error) {
 		return nil, err
 	}
 	return &abi, nil
+}
+func (c *Bridge) DecodeMessageBody(body string, isInternal bool) (*client.DecodedMessageBody, error) {
+	abi, err := c.Abi()
+	if err != nil {
+		return nil, err
+	}
+
+	params := client.ParamsOfDecodeMessageBody{
+		Abi:        *abi,
+		Body:       body,
+		IsInternal: isInternal,
+	}
+
+	return c.Ctx.Conn.AbiDecodeMessageBody(&params)
 }
 func (c *Bridge) Address() (string, error) {
 	bridgeDeployParams := BridgeDeployParams{

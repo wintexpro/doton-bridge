@@ -15,10 +15,11 @@ import (
 
 // Chain specific options
 var (
-	SenderOpt     = "sender"
-	ReceiverOpt   = "receiver"
-	ContractsPath = "contractsPath"
-	WorkchainID   = "workchainID"
+	SenderOpt              = "sender"
+	ReceiverOpt            = "receiver"
+	BurnedTokensHandlerOpt = "burnedTokensHandler"
+	ContractsPath          = "contractsPath"
+	WorkchainID            = "workchainID"
 )
 
 // Config encapsulates all necessary parameters in ethereum compatible forms
@@ -38,7 +39,7 @@ type Config struct {
 }
 
 // parseChainConfig uses a core.ChainConfig to construct a corresponding Config
-func parseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
+func ParseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
 
 	config := &Config{
 		name:           chainCfg.Name,
@@ -72,7 +73,14 @@ func parseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
 		config.contracts[ReceiverOpt] = contract
 		delete(chainCfg.Opts, ReceiverOpt)
 	} else {
-		return nil, fmt.Errorf("must provide opts.receiverContract field for ton config")
+		return nil, fmt.Errorf("must provide opts.receiver field for ton config")
+	}
+
+	if contract, ok := chainCfg.Opts[BurnedTokensHandlerOpt]; ok && contract != "" {
+		config.contracts[BurnedTokensHandlerOpt] = contract
+		delete(chainCfg.Opts, BurnedTokensHandlerOpt)
+	} else {
+		return nil, fmt.Errorf("must provide opts.burnedTokensHandler field for ton config")
 	}
 
 	if HTTP, ok := chainCfg.Opts["http"]; ok && HTTP == "true" {

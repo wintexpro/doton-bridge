@@ -77,7 +77,7 @@ func setupBlockstore(cfg *Config, kp *ed25519.Keypair) (*blockstore.Blockstore, 
 }
 
 func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<- error, m *metrics.ChainMetrics) (*Chain, error) {
-	cfg, err := parseChainConfig(chainCfg)
+	cfg, err := ParseChainConfig(chainCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +146,10 @@ func (c *Chain) Name() string {
 
 func (c *Chain) LatestBlock() metrics.LatestBlock {
 	return c.listener.latestBlock
+}
+
+func (c *Chain) Client() *client.Client {
+	return c.conn.Client()
 }
 
 // Stop signals to any running routines to exit

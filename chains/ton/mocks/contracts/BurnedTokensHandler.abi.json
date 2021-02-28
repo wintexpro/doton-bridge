@@ -1,0 +1,54 @@
+{
+	"ABI version": 2,
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"_tip3RootAddress","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "burnCallback",
+			"inputs": [
+				{"name":"tokens","type":"uint128"},
+				{"name":"payload","type":"cell"},
+				{"name":"sender_public_key","type":"uint256"},
+				{"name":"sender_address","type":"address"},
+				{"name":"wallet_address","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deposit",
+			"inputs": [
+				{"name":"destinationChainID","type":"uint8"},
+				{"name":"resourceID","type":"uint256"},
+				{"name":"depositNonce","type":"uint64"},
+				{"name":"amount","type":"uint128"},
+				{"name":"recipient","type":"uint256"}
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+		{
+			"name": "Deposit",
+			"inputs": [
+				{"name":"destinationChainID","type":"uint8"},
+				{"name":"resourceID","type":"uint256"},
+				{"name":"depositNonce","type":"uint64"},
+				{"name":"amount","type":"uint128"},
+				{"name":"recipient","type":"uint256"}
+			],
+			"outputs": [
+			]
+		}
+	]
+}

@@ -86,8 +86,9 @@ func DecodeMessageBody(c *client.Client, message *json.RawMessage, abi client.Ab
 	}
 
 	params := client.ParamsOfDecodeMessageBody{
-		Abi:  abi,
-		Body: string(msg),
+		Abi:        abi,
+		Body:       string(msg),
+		IsInternal: true,
 	}
 
 	return c.AbiDecodeMessageBody(&params)
@@ -95,13 +96,13 @@ func DecodeMessageBody(c *client.Client, message *json.RawMessage, abi client.Ab
 
 func GetMessage(c *client.Client, address string, prevBlock, currentBlock *connection.BlockType) (*[]json.RawMessage, error) {
 	messages := []json.RawMessage{}
-	// FIXME: receive dst_transaction and check aborted field
 	params := client.ParamsOfQueryCollection{
 		Collection: "messages",
 		Result:     "id status created_at body src",
 		Filter: json.RawMessage(`{
 			"status": { "eq": 5 },
 			"src": { "eq": "` + address + `" },
+			"bounced": { "eq": false},
 			"created_at": {
 				"ge": ` + strconv.FormatInt(prevBlock.CreatedAt, 10) + `,
 				"lt": ` + strconv.FormatInt(currentBlock.CreatedAt, 10) + `
