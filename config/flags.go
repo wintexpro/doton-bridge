@@ -82,6 +82,22 @@ var (
 	}
 )
 
+// Send tokens flags
+var (
+	AmountFlag = &cli.StringFlag{
+		Name:  "amount",
+		Usage: "Amount of tokens ",
+	}
+	ToFlag = &cli.StringFlag{
+		Name:  "to",
+		Usage: "Recipient",
+	}
+	NonceFlag = &cli.StringFlag{
+		Name:  "nonce",
+		Usage: "Nonce",
+	}
+)
+
 var (
 	TONImportFlag = &cli.BoolFlag{
 		Name:  "ton",

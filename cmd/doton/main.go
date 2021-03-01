@@ -65,6 +65,12 @@ var importFlags = []cli.Flag{
 	config.SubkeyNetworkFlag,
 }
 
+var sendTokensFlags = []cli.Flag{
+	config.AmountFlag,
+	config.ToFlag,
+	config.NonceFlag,
+}
+
 var accountCommand = cli.Command{
 	Name:  "accounts",
 	Usage: "manage bridge keystore",
@@ -109,7 +115,7 @@ var deployCommand = cli.Command{
 	Subcommands: []*cli.Command{
 		{
 			Action: wrapHandler(handleSendGrams),
-			Name:   "sendGrams",
+			Name:   "send-grams",
 			Usage:  "send grams from the giver to the contracts",
 		},
 		{
@@ -126,6 +132,12 @@ var deployCommand = cli.Command{
 			Action: wrapHandler(handleGetBalanceCmd),
 			Name:   "get-balance",
 			Usage:  "get of the wallet balance",
+		},
+		{
+			Action: wrapHandler(handleSendTokensCmd),
+			Name:   "send-tokens",
+			Usage:  "transfer the balance from owner's account to another account",
+			Flags:  sendTokensFlags,
 		},
 		{
 			Action: wrapHandler(handleSetupCmd),

@@ -58,12 +58,12 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 	case SimpleMessageTransfer:
 		prop, err = w.createSimpleMessageProposal(m)
 	default:
-		w.sysErr <- fmt.Errorf("unrecognized message type received (chain=%d, name=%s)", m.Destination, w.conn.name)
+		w.log.Error("unrecognized message type received (chain=%d, name=%s)", m.Destination, w.conn.name)
 		return false
 	}
 
 	if err != nil {
-		w.sysErr <- fmt.Errorf("failed to construct proposal (chain=%d, name=%s) Error: %w", m.Destination, w.conn.name, err)
+		w.log.Error("failed to construct proposal (chain=%d, name=%s) Error: %w", m.Destination, w.conn.name, err)
 		return false
 	}
 

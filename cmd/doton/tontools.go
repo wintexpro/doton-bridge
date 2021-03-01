@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -49,6 +50,11 @@ func handleDeployWalletCmd(ctx *cli.Context, dHandler *dataHandler) error {
 func handleGetBalanceCmd(ctx *cli.Context, dHandler *dataHandler) error {
 	log.Info("Getting balance...")
 	return execute(ctx, dHandler, getBalance)
+}
+
+func handleSendTokensCmd(ctx *cli.Context, dHandler *dataHandler) error {
+	log.Info("Sending tokens...")
+	return execute(ctx, dHandler, sendTokens(ctx.String(config.AmountFlag.Name), ctx.String(config.ToFlag.Name), ctx.String(config.NonceFlag.Name)))
 }
 
 func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error) error {
@@ -566,6 +572,112 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 	fmt.Printf(" \n Balance of %s: %s DTN \n", address, amount)
 
 	return nil
+}
+
+func sendTokens(amount string, to string, nonce string) func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
+	return func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
+		ctx := ContractContext{
+			Conn:        conn.Client(),
+			Signer:      signer,
+			WorkchainID: workchainID,
+		}
+
+		burnedTokensHandlerContract := BurnedTokensHandler{Ctx: ctx}
+		burnedTokensAddress, err := burnedTokensHandlerContract.Address()
+		if err != nil {
+			return err
+		}
+
+		tonTokenWalletContract := TONTokenWallet{Ctx: ctx}
+
+		walletCode, err := tonTokenWalletContract.Code()
+		if err != nil {
+			return err
+		}
+
+		rootTokenContract := RootTokenContract{Ctx: ctx}
+
+		rootTokenContractInitVars := &RootTokenContractInitVars{
+			RandomNonce: "0",
+			Name:        hex.EncodeToString([]byte("DOTON")),
+			Symbol:      hex.EncodeToString([]byte("DTN")),
+			Decimals:    "0xc",
+			Walletcode:  walletCode.Code,
+		}
+
+		rootTokenContractAddress, err := rootTokenContract.Address(rootTokenContractInitVars)
+		if err != nil {
+			return err
+		}
+
+		rootToken, err := rootTokenContract.New(rootTokenContractAddress, rootTokenContractInitVars)
+		if err != nil {
+			return err
+		}
+
+		addressResult, err := rootToken.GetWalletAddress("0x"+signer.Keys.Public, ZERO_ADDRESS).Call()
+		if err != nil {
+			return err
+		}
+		address := addressResult.(Result)["value0"].(string)
+
+		tonTokenWalletInitVars := &TONTokenWalletInitVars{
+			Rootaddress:     rootTokenContractAddress,
+			Code:            walletCode.Code,
+			Walletpublickey: "0x" + signer.Keys.Public,
+			Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
+		}
+
+		wallet, err := tonTokenWalletContract.New(address, tonTokenWalletInitVars)
+		if err != nil {
+			return err
+		}
+
+		messageType := "0x" + hex.EncodeToString(
+			[]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 199, 110, 190, 74, 2, 187, 195, 71, 134, 216, 96, 179, 85, 245, 165, 206, 0},
+		)
+
+		input, err := json.Marshal(map[string]interface{}{
+			"destinationChainID": "1",
+			"resourceID":         messageType,
+			"depositNonce":       nonce,
+			"amount":             amount,
+			"recipient":          to,
+		})
+		if err != nil {
+			return err
+		}
+
+		abi, err := burnedTokensHandlerContract.Abi()
+		if err != nil {
+			return err
+		}
+
+		paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
+			Abi:        *abi,
+			Signer:     *signer,
+			IsInternal: true,
+			CallSet: client.CallSet{
+				FunctionName: "deposit",
+				Input:        input,
+			},
+		}
+
+		resultOfEncodeMessageBody, err := conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
+		if err != nil {
+			return err
+		}
+
+		messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
+			return func(event *client.ProcessingEvent) {
+				logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+			}
+		}
+
+		wallet.BurnByOwner(amount, "100000000", burnedTokensAddress, resultOfEncodeMessageBody.Body).Send(messageCallback("wallet.BurnByOwner"))
+
+		return nil
+	}
 }
 
 func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
