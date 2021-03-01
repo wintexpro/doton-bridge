@@ -23,6 +23,6 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: "wintex/doton-bridge:$RELEASE_VERSION"
+        tags: wintex/doton-bridge:${{ env.RELEASE_VERSION }}
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
