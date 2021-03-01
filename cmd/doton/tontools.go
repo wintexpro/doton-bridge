@@ -559,7 +559,11 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 
 	result, err := wallet.GetDetails().Call()
 
-	fmt.Printf(" \n Balance of %s: %s \n", address, result.(Result)["value0"].(WalletDetails)["balance"])
+	amount := new(big.Int)
+	amount.SetString(result.(Result)["value0"].(WalletDetails)["balance"].(string), 10)
+	amount.Div(amount, big.NewInt(1000000000000))
+
+	fmt.Printf(" \n Balance of %s: %s DTN \n", address, amount)
 
 	return nil
 }
