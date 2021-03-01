@@ -117,11 +117,6 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 			return false
 		}
 
-		fmt.Printf("\n\n input: %#v \n\n", map[string]interface{}{
-			"to":     string(m.Payload[1].([]byte)),
-			"tokens": amount.String(),
-		})
-
 		paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
 			Abi:        w.abi[RootTokenContractKey],
 			Signer:     *w.relayer.Ctx.Signer,
@@ -144,13 +139,6 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 		dataStr := "0x" + hex.EncodeToString([]byte(m.Payload[1].(types.Text)))
 
 		input, err := json.Marshal(map[string]interface{}{
-			"chainId":     m.Destination,
-			"nonce":       m.DepositNonce,
-			"messageType": messageType,
-			"data":        dataStr,
-		})
-
-		fmt.Printf("\n\n input: %#v \n\n", map[string]interface{}{
 			"chainId":     m.Destination,
 			"nonce":       m.DepositNonce,
 			"messageType": messageType,

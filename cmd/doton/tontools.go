@@ -46,6 +46,11 @@ func handleDeployWalletCmd(ctx *cli.Context, dHandler *dataHandler) error {
 	return execute(ctx, dHandler, deployWallet)
 }
 
+func handleGetBalanceCmd(ctx *cli.Context, dHandler *dataHandler) error {
+	log.Info("Getting balance...")
+	return execute(ctx, dHandler, getBalance)
+}
+
 func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error) error {
 	cfg, err := config.GetConfig(ctx)
 	if err != nil {
@@ -169,10 +174,10 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 	}
 
 	rootTokenContractInitVars := &RootTokenContractInitVars{
-		RandomNonce: "0x0",
+		RandomNonce: "0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
-		Decimals:    "0x0",
+		Decimals:    "0xe8d4a51000",
 		Walletcode:  walletCode.Code,
 	}
 
@@ -441,7 +446,7 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 		RandomNonce: "0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
-		Decimals:    "0x0",
+		Decimals:    "0xe8d4a51000",
 		Walletcode:  walletCode.Code,
 	}
 
@@ -498,6 +503,66 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 }
 
 type Result = map[string]interface{}
+type WalletDetails = map[string]interface{}
+
+func getBalance(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
+	ctx := ContractContext{
+		Conn:        conn.Client(),
+		Signer:      signer,
+		WorkchainID: workchainID,
+	}
+
+	tonTokenWalletContract := TONTokenWallet{Ctx: ctx}
+
+	walletCode, err := tonTokenWalletContract.Code()
+	if err != nil {
+		return err
+	}
+
+	rootTokenContract := RootTokenContract{Ctx: ctx}
+
+	rootTokenContractInitVars := &RootTokenContractInitVars{
+		RandomNonce: "0",
+		Name:        hex.EncodeToString([]byte("DOTON")),
+		Symbol:      hex.EncodeToString([]byte("DTN")),
+		Decimals:    "0xe8d4a51000",
+		Walletcode:  walletCode.Code,
+	}
+
+	rootTokenContractAddress, err := rootTokenContract.Address(rootTokenContractInitVars)
+	if err != nil {
+		return err
+	}
+
+	rootToken, err := rootTokenContract.New(rootTokenContractAddress, rootTokenContractInitVars)
+	if err != nil {
+		return err
+	}
+
+	addressResult, err := rootToken.GetWalletAddress("0x"+signer.Keys.Public, ZERO_ADDRESS).Call()
+	if err != nil {
+		return err
+	}
+	address := addressResult.(Result)["value0"].(string)
+
+	tonTokenWalletInitVars := &TONTokenWalletInitVars{
+		Rootaddress:     rootTokenContractAddress,
+		Code:            walletCode.Code,
+		Walletpublickey: "0x" + signer.Keys.Public,
+		Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
+	}
+
+	wallet, err := tonTokenWalletContract.New(address, tonTokenWalletInitVars)
+	if err != nil {
+		return err
+	}
+
+	result, err := wallet.GetDetails().Call()
+
+	fmt.Printf("Balance of %s: %s", address, result.(Result)["value0"].(WalletDetails)["balance"])
+
+	return nil
+}
 
 func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
@@ -521,10 +586,10 @@ func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *c
 	}
 
 	rootTokenContractInitVars := &RootTokenContractInitVars{
-		RandomNonce: "0x0",
+		RandomNonce: "0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
-		Decimals:    "0x0",
+		Decimals:    "0xe8d4a51000",
 		Walletcode:  walletCode.Code,
 	}
 
