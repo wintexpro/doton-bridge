@@ -4,7 +4,6 @@
 # Build TON SDK
 
 FROM phusion/baseimage:0.10.2 as sdk-builder
-ENV RUST_TOOLCHAIN=nightly-2020-10-01
 ARG PROFILE=release
 WORKDIR /ton
 
@@ -13,9 +12,6 @@ RUN apt-get update && \
 	apt-get install -y cmake pkg-config libssl-dev git clang
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	export PATH="$PATH:$HOME/.cargo/bin" && \
-	rustup toolchain install $RUST_TOOLCHAIN && \
-	rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN && \
-	rustup default $RUST_TOOLCHAIN && \
 	rustup default stable
 RUN git clone --depth 1 --branch 1.8.0 https://github.com/tonlabs/TON-SDK.git && \
   export PATH="$PATH:$HOME/.cargo/bin" && \

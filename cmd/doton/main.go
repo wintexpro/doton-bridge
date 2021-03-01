@@ -118,6 +118,11 @@ var deployCommand = cli.Command{
 			Usage:  "deploy the set of ton contracts",
 		},
 		{
+			Action: wrapHandler(handleDeployWalletCmd),
+			Name:   "deploy-wallet",
+			Usage:  "deploy the wallet contract",
+		},
+		{
 			Action: wrapHandler(handleSetupCmd),
 			Name:   "setup",
 			Usage:  "setup contracts of brige",

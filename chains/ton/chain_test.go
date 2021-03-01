@@ -5,7 +5,6 @@ package ton
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -215,20 +214,20 @@ func TestTonChain(t *testing.T) {
 
 	// ======== New BurnedTokensHandlerContract
 
-	burnedTokensHandler, err := burnedTokensHandlerContract.New(burnedTokensHandlerAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// burnedTokensHandler, err := burnedTokensHandlerContract.New(burnedTokensHandlerAddress)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 
 	// bridgeVoteController, err := bridgeVoteControllerContract.New(bridgeVoteControllerAddress)
 	// if err != nil {
 	// 	t.Fatal(err)
 	// }
 
-	wallet, err := tonTokenWalletContract.New(tonTokenWalletAddress, tonTokenWalletInitVars)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// wallet, err := tonTokenWalletContract.New(tonTokenWalletAddress, tonTokenWalletInitVars)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 
 	// var wallet *TONTokenWalletContract
 	// if wallet, err = tonTokenWalletContract.Deploy(tonTokenWalletInitVars, messageCallback); err != nil {
@@ -241,11 +240,11 @@ func TestTonChain(t *testing.T) {
 	// 	t.Fatal(err)
 	// }
 
-	wdetails, err := wallet.GetDetails().Call()
-	fmt.Printf("\nwdetails: %#v\n", wdetails)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// wdetails, err := wallet.GetDetails().Call()
+	// fmt.Printf("\nwdetails: %#v\n", wdetails)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 
 	// // // Set Simple Message Handler
 
@@ -334,35 +333,35 @@ func TestTonChain(t *testing.T) {
 
 	// ========================
 
-	messageType := "0x" + hex.EncodeToString(FungibleTransfer3ResourceID[:])
+	// messageType := "0x" + hex.EncodeToString(FungibleTransfer3ResourceID[:])
 
-	input, err := json.Marshal(map[string]interface{}{
-		"destinationChainID": "1",
-		"resourceID":         messageType,
-		"depositNonce":       "1",
-		"amount":             "1000000000000",
-		"recipient":          "0xbc5531e87959d836550577fb7e6df9c0546686f9c11c39fe1355490edbf86173",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	// input, err := json.Marshal(map[string]interface{}{
+	// 	"destinationChainID": "1",
+	// 	"resourceID":         messageType,
+	// 	"depositNonce":       "1",
+	// 	"amount":             "1000000000000",
+	// 	"recipient":          "0xbc5531e87959d836550577fb7e6df9c0546686f9c11c39fe1355490edbf86173",
+	// })
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 
-	paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
-		Abi:        burnedTokensHandler.Abi,
-		Signer:     *burnedTokensHandler.Ctx.Signer,
-		IsInternal: true,
-		CallSet: client.CallSet{
-			FunctionName: "deposit",
-			Input:        input,
-		},
-	}
+	// paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
+	// 	Abi:        burnedTokensHandler.Abi,
+	// 	Signer:     *burnedTokensHandler.Ctx.Signer,
+	// 	IsInternal: true,
+	// 	CallSet: client.CallSet{
+	// 		FunctionName: "deposit",
+	// 		Input:        input,
+	// 	},
+	// }
 
-	resultOfEncodeMessageBody, err := chain.conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// resultOfEncodeMessageBody, err := chain.conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 
-	_, err = wallet.BurnByOwner("1000000000000", "100000000", burnedTokensHandlerAddress, resultOfEncodeMessageBody.Body).Send(messageCallback)
+	// _, err = wallet.BurnByOwner("1000000000000", "100000000", burnedTokensHandlerAddress, resultOfEncodeMessageBody.Body).Send(messageCallback)
 
 	// ========================
 

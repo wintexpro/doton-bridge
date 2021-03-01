@@ -22,23 +22,31 @@ import (
 	"github.com/wintexpro/chainbridge-utils/keystore"
 )
 
+var ZERO_ADDRESS = "0:0000000000000000000000000000000000000000000000000000000000000000"
+
 // handleDeployCmd deploy the set of ton contracts
 
 func handleSendGrams(ctx *cli.Context, dHandler *dataHandler) error {
+	log.Info("Send grams...")
 	return execute(ctx, dHandler, sendGrams)
 }
 
 func handleDeployCmd(ctx *cli.Context, dHandler *dataHandler) error {
-	return execute(ctx, dHandler, startTonDeploy)
+	log.Info("Starting deploy...")
+	return execute(ctx, dHandler, deploy)
 }
 
 func handleSetupCmd(ctx *cli.Context, dHandler *dataHandler) error {
+	log.Info("Setup...")
 	return execute(ctx, dHandler, setup)
 }
 
-func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error) error {
-	log.Info("Starting deploy...")
+func handleDeployWalletCmd(ctx *cli.Context, dHandler *dataHandler) error {
+	log.Info("Starting deploy Wallet...")
+	return execute(ctx, dHandler, deployWallet)
+}
 
+func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error) error {
 	cfg, err := config.GetConfig(ctx)
 	if err != nil {
 		return err
@@ -94,9 +102,9 @@ func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.C
 	return nil
 }
 
-func startTonDeploy(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
+func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	var (
-		accessControllerAddress, senderAddress, tip3HandlerAddress, tonTokenWalletAddress,
+		accessControllerAddress, senderAddress, tip3HandlerAddress,
 		bridgeAddress, relayerAddress, receiverAddress, bridgeVoteControllerAddress, messageHandlerAddress,
 		burnedTokensHandlerAddress, rootTokenContractAddress string
 	)
@@ -161,7 +169,7 @@ func startTonDeploy(conn *connection.Connection, workchainID null.Int32, signer 
 	}
 
 	rootTokenContractInitVars := &RootTokenContractInitVars{
-		RandomNonce: "0",
+		RandomNonce: "0x0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
 		Decimals:    "0x0",
@@ -172,16 +180,6 @@ func startTonDeploy(conn *connection.Connection, workchainID null.Int32, signer 
 		return err
 	}
 
-	tonTokenWalletInitVars := &TONTokenWalletInitVars{
-		Rootaddress:     rootTokenContractAddress,
-		Code:            walletCode.Code,
-		Walletpublickey: "0x" + signer.Keys.Public,
-		Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
-	}
-
-	if tonTokenWalletAddress, err = tonTokenWalletContract.Address(tonTokenWalletInitVars); err != nil {
-		return err
-	}
 	if messageHandlerAddress, err = messageHandlerContract.Address(); err != nil {
 		return err
 	}
@@ -195,7 +193,6 @@ func startTonDeploy(conn *connection.Connection, workchainID null.Int32, signer 
 	fmt.Printf("rootTokenContract: %s \n", rootTokenContractAddress)
 	fmt.Printf("tip3Handler: %s \n", tip3HandlerAddress)
 	fmt.Printf("messageHandler: %s \n", messageHandlerAddress)
-	fmt.Printf("tonTokenWallet: %s \n", tonTokenWalletAddress)
 	fmt.Printf("burnedTokensHandler: %s \n", burnedTokensHandlerAddress)
 
 	if _, err = accessControllerContract.Deploy(
@@ -372,7 +369,7 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 
 func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	var (
-		accessControllerAddress, senderAddress, tip3HandlerAddress, tonTokenWalletAddress,
+		accessControllerAddress, senderAddress, tip3HandlerAddress,
 		bridgeAddress, relayerAddress, receiverAddress, bridgeVoteControllerAddress, messageHandlerAddress,
 		burnedTokensHandlerAddress, rootTokenContractAddress string
 	)
@@ -448,16 +445,6 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 		return err
 	}
 
-	tonTokenWalletInitVars := &TONTokenWalletInitVars{
-		Rootaddress:     rootTokenContractAddress,
-		Code:            walletCode.Code,
-		Walletpublickey: "0x" + signer.Keys.Public,
-		Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
-	}
-
-	if tonTokenWalletAddress, err = tonTokenWalletContract.Address(tonTokenWalletInitVars); err != nil {
-		return err
-	}
 	if messageHandlerAddress, err = messageHandlerContract.Address(); err != nil {
 		return err
 	}
@@ -489,12 +476,81 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 	if _, err = giver.SendGrams(rootTokenContractAddress, big.NewInt(200000000000), messageCallback("SendGrams(rootTokenContractAddress)")); err != nil {
 		return err
 	}
-	if _, err = giver.SendGrams(tonTokenWalletAddress, big.NewInt(200000000000), messageCallback("SendGrams(tonTokenWalletAddress)")); err != nil {
-		return err
-	}
 	if _, err = giver.SendGrams(messageHandlerAddress, big.NewInt(200000000000), messageCallback("SendGrams(messageHandlerAddress)")); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+type Result = map[string]interface{}
+
+func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
+	messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
+		return func(event *client.ProcessingEvent) {
+			logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+		}
+	}
+
+	ctx := ContractContext{
+		Conn:        conn.Client(),
+		Signer:      signer,
+		WorkchainID: workchainID,
+	}
+
+	rootTokenContract := RootTokenContract{Ctx: ctx}
+	tonTokenWalletContract := TONTokenWallet{Ctx: ctx}
+
+	giver, err := NewGiver(conn.Client(), *signer, workchainID)
+	if err != nil {
+		return err
+	}
+
+	walletCode, err := tonTokenWalletContract.Code()
+	if err != nil {
+		return err
+	}
+
+	rootTokenContractInitVars := &RootTokenContractInitVars{
+		RandomNonce: "0x0",
+		Name:        hex.EncodeToString([]byte("DOTON")),
+		Symbol:      hex.EncodeToString([]byte("DTN")),
+		Decimals:    "0x0",
+		Walletcode:  walletCode.Code,
+	}
+
+	rootTokenContractAddress, err := rootTokenContract.Address(rootTokenContractInitVars)
+	if err != nil {
+		return err
+	}
+
+	tonTokenWalletInitVars := &TONTokenWalletInitVars{
+		Rootaddress:     rootTokenContractAddress,
+		Code:            walletCode.Code,
+		Walletpublickey: "0x" + signer.Keys.Public,
+		Owneraddress:    ZERO_ADDRESS,
+	}
+
+	rootToken, err := rootTokenContract.New(rootTokenContractAddress, rootTokenContractInitVars)
+	if err != nil {
+		return err
+	}
+
+	addressResult, err := rootToken.GetWalletAddress("0x"+signer.Keys.Public, ZERO_ADDRESS).Call()
+	if err != nil {
+		return err
+	}
+
+	_, err = giver.SendGrams(addressResult.(Result)["value0"].(string), big.NewInt(100000000), messageCallback("SendGrams"))
+	if err != nil {
+		return err
+	}
+
+	if _, err = tonTokenWalletContract.Deploy(tonTokenWalletInitVars, messageCallback("tonTokenWalletContract.Deploy")); err != nil {
+		return err
+	}
+
+	logger.Info("Wallet address", "Address", addressResult.(Result)["value0"].(string))
 
 	return nil
 }
