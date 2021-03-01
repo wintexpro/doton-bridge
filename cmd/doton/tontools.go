@@ -177,7 +177,7 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 		RandomNonce: "0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
-		Decimals:    "0xe8d4a51000",
+		Decimals:    "0xc",
 		Walletcode:  walletCode.Code,
 	}
 
@@ -446,7 +446,7 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 		RandomNonce: "0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
-		Decimals:    "0xe8d4a51000",
+		Decimals:    "0xc",
 		Walletcode:  walletCode.Code,
 	}
 
@@ -525,7 +525,7 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 		RandomNonce: "0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
-		Decimals:    "0xe8d4a51000",
+		Decimals:    "0xc",
 		Walletcode:  walletCode.Code,
 	}
 
@@ -589,7 +589,7 @@ func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *c
 		RandomNonce: "0",
 		Name:        hex.EncodeToString([]byte("DOTON")),
 		Symbol:      hex.EncodeToString([]byte("DTN")),
-		Decimals:    "0xe8d4a51000",
+		Decimals:    "0xc",
 		Walletcode:  walletCode.Code,
 	}
 
