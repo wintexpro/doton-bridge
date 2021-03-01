@@ -348,6 +348,8 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 		return err
 	}
 
+	time.Sleep(time.Second * 30)
+
 	result, err := bridge.GetHandlerAddressByMessageType("0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00").Call()
 	if err != nil {
 		return err
@@ -362,14 +364,12 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 
 	fmt.Printf("\n\n %s Handler address: %#v\n\n", "0x"+hex.EncodeToString(SimpleMessageResourceID[:]), result)
 
-	time.Sleep(time.Second * 30)
-
 	return nil
 }
 
 func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	var (
-		accessControllerAddress, senderAddress, tip3HandlerAddress,
+		accessControllerAddress, senderAddress, tip3HandlerAddress, tonTokenWalletAddress,
 		bridgeAddress, relayerAddress, receiverAddress, bridgeVoteControllerAddress, messageHandlerAddress,
 		burnedTokensHandlerAddress, rootTokenContractAddress string
 	)
@@ -428,6 +428,10 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 		return err
 	}
 
+	if messageHandlerAddress, err = messageHandlerContract.Address(); err != nil {
+		return err
+	}
+
 	walletCode, err := tonTokenWalletContract.Code()
 	if err != nil {
 		return err
@@ -445,10 +449,20 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 		return err
 	}
 
-	if messageHandlerAddress, err = messageHandlerContract.Address(); err != nil {
+	tonTokenWalletInitVars := &TONTokenWalletInitVars{
+		Rootaddress:     rootTokenContractAddress,
+		Code:            walletCode.Code,
+		Walletpublickey: "0x" + signer.Keys.Public,
+		Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
+	}
+
+	if tonTokenWalletAddress, err = tonTokenWalletContract.Address(tonTokenWalletInitVars); err != nil {
 		return err
 	}
 
+	if _, err = giver.SendGrams(tonTokenWalletAddress, big.NewInt(200000000000), messageCallback("SendGrams(tonTokenWalletAddress)")); err != nil {
+		return err
+	}
 	if _, err = giver.SendGrams(burnedTokensHandlerAddress, big.NewInt(200000000000), messageCallback("SendGrams(burnedTokensHandlerAddress)")); err != nil {
 		return err
 	}
@@ -501,11 +515,6 @@ func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *c
 	rootTokenContract := RootTokenContract{Ctx: ctx}
 	tonTokenWalletContract := TONTokenWallet{Ctx: ctx}
 
-	giver, err := NewGiver(conn.Client(), *signer, workchainID)
-	if err != nil {
-		return err
-	}
-
 	walletCode, err := tonTokenWalletContract.Code()
 	if err != nil {
 		return err
@@ -537,11 +546,6 @@ func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *c
 	}
 
 	addressResult, err := rootToken.GetWalletAddress("0x"+signer.Keys.Public, ZERO_ADDRESS).Call()
-	if err != nil {
-		return err
-	}
-
-	_, err = giver.SendGrams(addressResult.(Result)["value0"].(string), big.NewInt(100000000), messageCallback("SendGrams"))
 	if err != nil {
 		return err
 	}
