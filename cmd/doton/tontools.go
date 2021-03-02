@@ -346,6 +346,13 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 83, 105, 109, 112, 108, 101, 77, 101, 115, 115, 97, 103, 101, 82, 101, 115, 111, 117, 114, 99, 101,
 	}
 
+	_, err = accessController.GrantSuperAdminRole(relayerAddress).Send(messageCallback("GrantSuperAdminRole"))
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(time.Second * 10)
+
 	if _, err = relayer.BridgeSetHandler("0x"+hex.EncodeToString(SimpleMessageResourceID[:]), messageHandlerAddress).Send(messageCallback("BridgeSetHandler(SimpleMessageResourceID)")); err != nil {
 		return err
 	}
@@ -354,12 +361,7 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 		return err
 	}
 
-	_, err = accessController.GrantSuperAdminRole(relayerAddress).Send(messageCallback("GrantSuperAdminRole"))
-	if err != nil {
-		return err
-	}
-
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Second * 10)
 
 	result, err := bridge.GetHandlerAddressByMessageType("0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00").Call()
 	if err != nil {
