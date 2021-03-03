@@ -6,12 +6,14 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
 	"time"
 
 	"github.com/ChainSafe/ChainBridge/config"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 
@@ -576,6 +578,10 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 	return nil
 }
 
+func decodeSS58AddressToPublicKey(address string) string {
+	return fmt.Sprintf("0x%x", base58.Decode(string(address))[1:33])
+}
+
 func sendTokens(amount string, to string, nonce string) func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	return func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 		ctx := ContractContext{
@@ -639,12 +645,25 @@ func sendTokens(amount string, to string, nonce string) func(conn *connection.Co
 			[]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 199, 110, 190, 74, 2, 187, 195, 71, 134, 216, 96, 179, 85, 245, 165, 206, 0},
 		)
 
+		decimals := big.NewInt(12)
+		mul := big.NewInt(10)
+		bamount := new(big.Int)
+		_, ok := bamount.SetString(amount, 10)
+
+		if !ok {
+			panic(errors.New("error"))
+		}
+
+		mul.Exp(mul, decimals, nil)
+
+		bamount.Mul(bamount, mul)
+
 		input, err := json.Marshal(map[string]interface{}{
 			"destinationChainID": "1",
 			"resourceID":         messageType,
 			"depositNonce":       nonce,
-			"amount":             amount,
-			"recipient":          to,
+			"amount":             bamount.String(),
+			"recipient":          decodeSS58AddressToPublicKey(to),
 		})
 		if err != nil {
 			return err
@@ -676,7 +695,7 @@ func sendTokens(amount string, to string, nonce string) func(conn *connection.Co
 			}
 		}
 
-		wallet.BurnByOwner(amount, "100000000", burnedTokensAddress, resultOfEncodeMessageBody.Body).Send(messageCallback("wallet.BurnByOwner"))
+		wallet.BurnByOwner(bamount.String(), "100000000", burnedTokensAddress, resultOfEncodeMessageBody.Body).Send(messageCallback("wallet.BurnByOwner"))
 
 		return nil
 	}

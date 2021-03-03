@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -11,6 +12,12 @@ import (
 	"github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	"github.com/wintexpro/chainbridge-utils/keystore"
 )
+
+func TestDecodeSS58AddressToPublicKey(t *testing.T) {
+	if decodeSS58AddressToPublicKey("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY") != "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d" {
+		t.Fatal(errors.New("Public key is not valid"))
+	}
+}
 
 func TestSendGramsCmd(t *testing.T) {
 	os.Setenv(keystore.EnvPassword, "123456")
