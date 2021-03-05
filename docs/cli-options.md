@@ -18,6 +18,33 @@
 --version, -v        print the version (default: false)
 ```
 
+### Deploy Management
+#### `doton contracts send-grams`
+send grams from the giver to the contracts
+#### `doton contracts deploy`
+deploy the set of ton contracts
+#### `doton contracts deploy-relayer`
+deploy the relayer ton contract
+```
+--from Address of relayer
+```
+#### `doton contracts deploy-wallet`
+deploy the wallet contract
+#### `doton contracts get-balance`
+get of the wallet balance
+#### `doton contracts setup`
+setup contracts of brige
+
+#### `doton contracts send-tokens`
+
+transfer the balance from owner's account to another account
+
+```
+--amount  Amount of tokens
+--to      Recipient
+--nonce   Nonce
+```
+
 ### Account Management
 
 The commands can be used to manage keys in the local keystore. You can view available keys with `doton accounts list`.
