@@ -42,10 +42,11 @@ func TestSendGramsCmd(t *testing.T) {
 	workchainID := null.Int32From(int32(0))
 
 	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: client.KeyPair{
-			Public: kp.PublicKey(),
-			Secret: kp.SecretKey(),
+		EnumTypeValue: client.KeysSigner{
+			Keys: client.KeyPair{
+				Public: kp.PublicKey(),
+				Secret: kp.SecretKey(),
+			},
 		},
 	}
 

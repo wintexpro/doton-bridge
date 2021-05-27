@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ChainSafe/ChainBridge/tonbindings"
 	. "github.com/ChainSafe/ChainBridge/tonbindings"
 	"github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
@@ -49,10 +50,11 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 	}
 
 	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: client.KeyPair{
-			Public: kp.PublicKey(),
-			Secret: kp.SecretKey(),
+		EnumTypeValue: client.KeysSigner{
+			Keys: client.KeyPair{
+				Public: kp.PublicKey(),
+				Secret: kp.SecretKey(),
+			},
 		},
 	}
 
@@ -80,6 +82,9 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 	abi[MessageHandlerContractKey] = *abiMessageHandler
 
 	relayer, err := relayerContract.New(cfg.from)
+	if err != nil {
+		panic(err)
+	}
 
 	return &writer{
 		cfg:     *cfg,
@@ -94,8 +99,17 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 	}
 }
 
+func PublicRandomness(epochVoteController *tonbindings.EpochControllerContract) (string, error) {
+	publicRandomnessMap, err := epochVoteController.PublicRandomness().Call()
+	if err != nil {
+		return "", err
+	}
+
+	return publicRandomnessMap.(map[string]interface{})["publicRandomness"].(string), nil
+}
+
 func (w *writer) MessageCallback(event *client.ProcessingEvent) {
-	w.log.Debug("MessageID: %s", event.MessageID)
+	// w.log.Debug("MessageID: %s", event)
 }
 
 // ResolveMessage handles any given message based on type
@@ -170,7 +184,7 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 	messageType := "0x" + hex.EncodeToString(m.ResourceId[:])
 
 	//FIXME: Check is proposal valid
-	shardBlockID, err := w.relayer.VoteThroughBridge("1", fmt.Sprint(m.Destination), messageType, fmt.Sprint(m.DepositNonce), data).Send(w.MessageCallback)
+	shardBlockID, err := w.relayer.VoteThroughBridge("2", "1", fmt.Sprint(m.Destination), messageType, fmt.Sprint(m.DepositNonce), data).Send(w.MessageCallback)
 	if err != nil {
 		w.log.Error("failed to construct proposal", "chainId", m.Destination, "error", err)
 		return false

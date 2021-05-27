@@ -150,8 +150,9 @@ func DeriveRelayerAddress(contractsPath string, keys client.KeyPair) string {
 	}
 
 	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: keys,
+		EnumTypeValue: client.KeysSigner{
+			Keys: keys,
+		},
 	}
 
 	deploySet := client.DeploySet{

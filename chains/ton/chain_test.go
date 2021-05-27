@@ -4,19 +4,26 @@
 package ton
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	utils "github.com/ChainSafe/ChainBridge/shared/ton"
 	. "github.com/ChainSafe/ChainBridge/tonbindings"
 	"github.com/ChainSafe/log15"
 	log "github.com/ChainSafe/log15"
+	"github.com/centrifuge/go-substrate-rpc-client/types"
 	"github.com/radianceteam/ton-client-go/client"
 	"github.com/volatiletech/null"
 	"github.com/wintexpro/chainbridge-utils/core"
+	utils_ed25519 "github.com/wintexpro/chainbridge-utils/crypto/ed25519"
 	"github.com/wintexpro/chainbridge-utils/keystore"
+	"github.com/wintexpro/chainbridge-utils/msg"
 )
 
 var TestLogger = log15.New("chain", "test")
@@ -38,16 +45,16 @@ func TestTonChain(t *testing.T) {
 	cfg := &core.ChainConfig{
 		Id:             2,
 		Name:           "alice",
-		Endpoint:       "http://localhost",
-		From:           "0:2089148264fb4b40dbb9ed7ba7a862403a715abf50a5730637da33d4b6453dd2",
+		Endpoint:       "http://192.168.0.109",
+		From:           "0:b8d83bb3d617ba74e0ea44542a510ef43b5709eee93e2c8f2e6254bc5e59237f",
 		Insecure:       false,
 		KeystorePath:   dir + "/../../keys",
 		BlockstorePath: "",
 		FreshStart:     true,
 		Opts: map[string]string{
 			"contractsPath":       dir + "/mocks/contracts",
-			"receiver":            "0:1ba93200aa73341512bb7d406ccc3bae38b79628ef3fdcccd9ce2e0a133b1387",
-			"burnedTokensHandler": "0:f5150024d6737c23f8a5057b391e9b39a93bc48fa047108d7613b53b6401141f",
+			"receiver":            "0:f7fdc0170f9c7e0184962aea78b1f208fe857681537854104684d62479e76e5d",
+			"burnedTokensHandler": "0:dd510027840f11ce3b7b5ef0d177ccdad55f7f0fb104d8591c8c6f69babc9cc8",
 			"startBlock":          "3",
 			"workchainID":         "0",
 		},
@@ -68,17 +75,18 @@ func TestTonChain(t *testing.T) {
 	}
 
 	signer := client.Signer{
-		Type: client.KeysSignerType,
-		Keys: client.KeyPair{
-			Public: chain.kp.PublicKey(),
-			Secret: chain.kp.SecretKey(),
+		EnumTypeValue: client.KeysSigner{
+			Keys: client.KeyPair{
+				Public: chain.kp.PublicKey(),
+				Secret: chain.kp.SecretKey(),
+			},
 		},
 	}
 
 	TestLogger.SetHandler(log15.LvlFilterHandler(log15.LvlError, TestLogger.GetHandler()))
 
-	r := core.NewRouter(TestLogger)
-	chain.SetRouter(r)
+	router := core.NewRouter(TestLogger)
+	chain.SetRouter(router)
 
 	err = chain.Start()
 	if err != nil {
@@ -86,26 +94,18 @@ func TestTonChain(t *testing.T) {
 	}
 
 	messageCallback := func(event *client.ProcessingEvent) {
-		// t.Logf("\n\nEventType: %v", event.Type)
-		// t.Logf("\n\nShardBlockID: %v", event.ShardBlockID)
-		// t.Logf("\n\nMessageId: %v", event.MessageID)
-		// t.Logf("\n\nevent: %#v", event)
+		t.Logf("\n\nevent: %#v", event)
 	}
 
 	workchainID := null.Int32From(0)
 
-	var tip3HandlerAddress, relayerAddress, bridgeAddress, rootTokenContractAddress, tonTokenWalletAddress, burnedTokensHandlerAddress string
-
-	// var (
-	// 	accessControllerAddress, senderAddress, tip3HandlerAddress, tonTokenWalletAddress,
-	// 	bridgeAddress, relayerAddress, receiverAddress, bridgeVoteControllerAddress, messageHandlerAddress,
-	// 	burnedTokensHandlerAddress, rootTokenContractAddress string
-	// )
-
-	// // giver, err := NewGiver(chain.conn.Client(), signer, workchainID)
-	// // if err != nil {
-	// // 	t.Fatal(err)
-	// // }
+	var (
+		tip3HandlerAddress, relayerAddress,
+		bridgeAddress, rootTokenContractAddress,
+		tonTokenWalletAddress, burnedTokensHandlerAddress,
+		senderAddress, receiverAddress, accessControllerAddress, epochVoteControllerAddress,
+		messageHandlerAddress string
+	)
 
 	ctx := ContractContext{
 		Conn:        chain.conn.Client(),
@@ -113,17 +113,18 @@ func TestTonChain(t *testing.T) {
 		WorkchainID: workchainID,
 	}
 
-	// // proposalContract := Proposal{Ctx: ctx}
-	// senderContract := Sender{Ctx: ctx}
-	// receiverContract := Receiver{Ctx: ctx}
-	// accessControllerContract := AccessController{Ctx: ctx}
-	// bridgeVoteControllerContract := BridgeVoteController{Ctx: ctx}
+	// proposalContract := Proposal{Ctx: ctx}
+	epochContract := Epoch{Ctx: ctx}
+	senderContract := Sender{Ctx: ctx}
+	receiverContract := Receiver{Ctx: ctx}
+	accessControllerContract := AccessController{Ctx: ctx}
+	epochVoteControllerContract := EpochController{Ctx: ctx}
 	bridgeContract := Bridge{Ctx: ctx}
 	relayerContract := Relayer{Ctx: ctx}
 	tip3HandlerContract := Tip3Handler{Ctx: ctx}
 	rootTokenContract := RootTokenContract{Ctx: ctx}
 	tonTokenWalletContract := TONTokenWallet{Ctx: ctx}
-	// messageHandlerContract := MessageHandler{Ctx: ctx}
+	messageHandlerContract := MessageHandler{Ctx: ctx}
 	burnedTokensHandlerContract := BurnedTokensHandler{Ctx: ctx}
 
 	walletCode, err := tonTokenWalletContract.Code()
@@ -131,26 +132,21 @@ func TestTonChain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// // proposalCode, err := proposalContract.Code()
-	// // if err != nil {
-	// // 	t.Fatal(err)
-	// // }
-
 	if burnedTokensHandlerAddress, err = burnedTokensHandlerContract.Address(); err != nil {
 		t.Fatal(err)
 	}
-	// if senderAddress, err = senderContract.Address(); err != nil {
-	// 	t.Fatal(err)
-	// }
-	// if receiverAddress, err = receiverContract.Address(); err != nil {
-	// 	t.Fatal(err)
-	// }
-	// if accessControllerAddress, err = accessControllerContract.Address(); err != nil {
-	// 	t.Fatal(err)
-	// }
-	// if bridgeVoteControllerAddress, err = bridgeVoteControllerContract.Address(); err != nil {
-	// 	t.Fatal(err)
-	// }
+	if senderAddress, err = senderContract.Address(); err != nil {
+		t.Fatal(err)
+	}
+	if receiverAddress, err = receiverContract.Address(); err != nil {
+		t.Fatal(err)
+	}
+	if accessControllerAddress, err = accessControllerContract.Address(); err != nil {
+		t.Fatal(err)
+	}
+	if epochVoteControllerAddress, err = epochVoteControllerContract.Address(); err != nil {
+		t.Fatal(err)
+	}
 	if bridgeAddress, err = bridgeContract.Address(); err != nil {
 		t.Fatal(err)
 	}
@@ -176,208 +172,239 @@ func TestTonChain(t *testing.T) {
 	tonTokenWalletInitVars := &TONTokenWalletInitVars{
 		Rootaddress:     rootTokenContractAddress,
 		Code:            walletCode.Code,
-		Walletpublickey: "0x" + signer.Keys.Public,
+		Walletpublickey: "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
 		Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
 	}
 
 	if tonTokenWalletAddress, err = tonTokenWalletContract.Address(tonTokenWalletInitVars); err != nil {
 		t.Fatal(err)
 	}
-	// if messageHandlerAddress, err = messageHandlerContract.Address(); err != nil {
-	// 	t.Fatal(err)
-	// }
+	if messageHandlerAddress, err = messageHandlerContract.Address(); err != nil {
+		t.Fatal(err)
+	}
 
-	// fmt.Printf("sender: %s \n", senderAddress)
-	// fmt.Printf("receiver: %s \n", receiverAddress)
-	// fmt.Printf("accessController: %s \n", accessControllerAddress)
-	// fmt.Printf("bridgeVoteController: %s \n", bridgeVoteControllerAddress)
-	fmt.Printf("bridge: %s \n", bridgeAddress)
-	fmt.Printf("relayer: %s \n", relayerAddress)
-	fmt.Printf("rootTokenContract: %s \n", rootTokenContractAddress)
-	fmt.Printf("tip3Handler: %s \n", tip3HandlerAddress)
-	// fmt.Printf("messageHandler: %s \n", messageHandlerAddress)
-	fmt.Printf("tonTokenWallet: %s \n", tonTokenWalletAddress)
-	fmt.Printf("burnedTokensHandler: %s \n", burnedTokensHandlerAddress)
+	fmt.Print("\n")
+	fmt.Printf("%s :sender \n", senderAddress)
+	fmt.Printf("%s :receiver \n", receiverAddress)
+	fmt.Printf("%s :accessController \n", accessControllerAddress)
+	fmt.Printf("%s :epochVoteController \n", epochVoteControllerAddress)
+	fmt.Printf("%s :bridge \n", bridgeAddress)
+	fmt.Printf("%s :relayer \n", relayerAddress)
+	fmt.Printf("%s :rootTokenContract \n", rootTokenContractAddress)
+	fmt.Printf("%s :tip3Handler \n", tip3HandlerAddress)
+	fmt.Printf("%s :messageHandler \n", messageHandlerAddress)
+	fmt.Printf("%s :tonTokenWallet \n", tonTokenWalletAddress)
+	fmt.Printf("%s :burnedTokensHandler \n", burnedTokensHandlerAddress)
+	fmt.Print("\n")
 
-	// rootToken, err := rootTokenContract.New(rootTokenContractAddress, rootTokenContractInitVars)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	epochVoteController, err := epochVoteControllerContract.New(epochVoteControllerAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// ======== DecodeMessageBody Deposit
+	currentEpochNumberMap, err := epochVoteController.CurrentEpochNumber().Call()
+	if err != nil {
+		t.Fatal(err)
+	}
+	currentEpochNumber := currentEpochNumberMap.(map[string]interface{})["currentEpochNumber"].(string)
 
-	// message, err := burnedTokensHandlerContract.DecodeMessageBody("te6ccgEBAQEAXwAAuloTCToBAAAAAAAAAAAAAAAAAAAAx26+SgK7w0eG2GCzVfWlzgAAAAAAAAAAAgAAAAAAAAAAAAAA6NSlEAC8VTHoeVnYNlUFd/t+bfnAVGaG+cEcOf4TVUkO2/hhcw==", true)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// fmt.Printf("message: %s \n", message.Value)
+	epochAddressMap, err := epochVoteController.GetEpochAddress(currentEpochNumber).Call()
+	if err != nil {
+		t.Fatal(err)
+	}
+	epochAddress := epochAddressMap.(map[string]interface{})["epoch"].(string)
 
-	// ======== New BurnedTokensHandlerContract
+	publicRandomnessMap, err := epochVoteController.PublicRandomness().Call()
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicRandomness := publicRandomnessMap.(map[string]interface{})["publicRandomness"].(string)
 
-	// burnedTokensHandler, err := burnedTokensHandlerContract.New(burnedTokensHandlerAddress)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	relayer, err := relayerContract.New(relayerAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// bridgeVoteController, err := bridgeVoteControllerContract.New(bridgeVoteControllerAddress)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	rolemap, err := relayer.GetRole().Call()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// wallet, err := tonTokenWalletContract.New(tonTokenWalletAddress, tonTokenWalletInitVars)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	fmt.Print("\n")
+	fmt.Printf("%s :relayer role \n", rolemap)
+	fmt.Printf("%s :currentEpochNumber \n", currentEpochNumber)
+	fmt.Printf("%s :epochAddress \n\n", epochAddress)
+	fmt.Print("\n")
 
-	// var wallet *TONTokenWalletContract
-	// if wallet, err = tonTokenWalletContract.Deploy(tonTokenWalletInitVars, messageCallback); err != nil {
-	// 	t.Fatal(err)
-	// }
+	// STEP 1 signUpForEpoch
 
-	// details, err := rootToken.GetDetails().Call()
-	// fmt.Printf("\ndetails: %#v\n", details)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	ukp, err := utils_ed25519.NewKeypairFromSeed("action glow era all liquid critic achieve lawsuit era anger loud slight")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// wdetails, err := wallet.GetDetails().Call()
-	// fmt.Printf("\nwdetails: %#v\n", wdetails)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	kp := client.KeyPair{
+		Public: ukp.PublicKey(),
+		Secret: ukp.SecretKey(),
+	}
 
-	// // // Set Simple Message Handler
+	decodedSk, err := hex.DecodeString("f2b8ead4382c6d656a841b3a9dd190e66c0edcdb2d8df91ed665857c8b674977")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// _, err = relayer.BridgeSetHandler("0x"+hex.EncodeToString(SimpleMessageResourceID[:]), messageHandlerAddress).Send(messageCallback)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	privKey := ed25519.NewKeyFromSeed(decodedSk)
+	pubKey := privKey.Public()
 
-	// time.Sleep(time.Second * 5)
+	if kp.Public != hex.EncodeToString(pubKey.(ed25519.PublicKey)) {
+		t.Fatalf("\n Got:      %s \n Expected: %x", kp.Public, pubKey.(ed25519.PublicKey))
+	}
 
-	// // // Resolve message
+	if kp.Secret != hex.EncodeToString(privKey[:32]) {
+		t.Fatalf("\n Got:      %s \n Expected: %x", kp.Secret, privKey[:32])
+	}
 
-	// m := msg.Message{
-	// 	Source:       msg.ChainId(1),
-	// 	Destination:  msg.ChainId(1),
-	// 	Type:         SimpleMessageTransfer,
-	// 	DepositNonce: msg.Nonce(1),
-	// 	ResourceId:   msg.ResourceId(SimpleMessageResourceID),
-	// 	Payload: []interface{}{
-	// 		relayerAddress,
-	// 		types.Text("hello ton"),
-	// 	},
-	// }
+	decodedPR, err := hex.DecodeString(publicRandomness[2:])
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// if chain.writer.ResolveMessage(m) {
-	// 	t.Log("The message resolved")
-	// } else {
-	// 	t.Fatal("The message doesn't resolve")
-	// }
+	sign := ed25519.Sign(privKey, decodedPR)
+	encodedPR := base64.StdEncoding.EncodeToString(decodedPR)
 
-	// // // Set TIP-3 Transfer Handler
+	csign, err := chain.conn.Client().CryptoSign(&client.ParamsOfSign{
+		Keys:     kp,
+		Unsigned: encodedPR,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// fmt.Printf("\n\nResourceId: %s\n\n", "0x"+hex.EncodeToString(Tip3ResourceID[:]))
+	decodedSign := hex.EncodeToString(sign)
 
-	// _, err = accessController.GrantSuperAdminRole(relayerAddress).Send(messageCallback)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	if csign.Signature != decodedSign {
+		t.Fatalf("\n Got:      %s \n Expected: %s", csign.Signature, decodedSign)
+	}
 
-	// time.Sleep(time.Second * 5)
+	if !ed25519.Verify(pubKey.(ed25519.PublicKey), decodedPR, sign) {
+		t.Fatalf("\n Sign is not valid %s", sign)
+	}
 
-	// _, err = relayer.BridgeSetHandler("0x"+hex.EncodeToString(Tip3ResourceID[:]), tip3HandlerAddress).Send(messageCallback)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	decodedCSign, err := hex.DecodeString(csign.Signature)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// time.Sleep(time.Second * 5)
+	if !ed25519.Verify(pubKey.(ed25519.PublicKey), decodedPR, decodedCSign) {
+		t.Fatalf("\n Sign is not valid %s", decodedCSign)
+	}
 
-	// m = msg.NewFungibleTransfer(
-	// 	msg.ChainId(1), msg.ChainId(1), msg.Nonce(1), big.NewInt(1000),
-	// 	Tip3ResourceID, []byte("0:3afffeb3a1beb9c13099552310a7e35958af24119c2ecd2923348204dbd5b624"),
-	// )
+	ver, err := chain.conn.Client().CryptoVerifySignature(&client.ParamsOfVerifySignature{
+		Signed: csign.Signed,
+		Public: kp.Public,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// if chain.writer.ResolveMessage(m) {
-	// 	t.Log("The message resolved")
-	// } else {
-	// 	t.Fatal("The message doesn't resolve")
-	// }
+	if ver.Unsigned != encodedPR {
+		t.Fatalf("\n Got:      %s \n Expected: %s", ver.Unsigned, encodedPR)
+	}
 
-	// time.Sleep(time.Second * 5)
+	_, err = relayer.SignUpForEpoch(
+		epochAddress,
+		fmt.Sprintf("0x%x", sign[:32]),
+		fmt.Sprintf("0x%x", sign[32:]),
+		fmt.Sprintf("0x%s", kp.Public),
+	).Send(messageCallback)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// role, err := relayer.GetRole().Call()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	time.Sleep(time.Second * 10)
 
-	// fmt.Printf("\n\n Role:: %s \n\n", role)
+	// STEP 2 voteThroughBridge
 
-	// result, err := bridge.GetHandlerAddressByMessageType("0x" + hex.EncodeToString(Tip3ResourceID[:])).Call()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// fmt.Printf("\n\nGetHandlerAddressByMessageType: %#v\n\n", result)
+	epoch, err := epochContract.New(
+		epochAddress,
+		&EpochInitVars{
+			Number:                currentEpochNumber,
+			VoteControllerAddress: epochVoteControllerAddress,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// details, err = rootToken.GetDetails().Call()
-	// fmt.Printf("\ndetails: %#v\n", details)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	time.Sleep(time.Second * 11)
 
-	// details, err := wallet.GetDetails().Call()
-	// fmt.Printf("\nwdetails: %#v\n", details)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	resMap, err := epoch.IsChoosen(relayerAddress).Call()
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := resMap.(map[string]interface{})["value0"].(bool)
 
-	// ========================
+	if !res {
+		t.Fatal("\n Relayer is not active")
+	}
 
-	// messageType := "0x" + hex.EncodeToString(FungibleTransfer3ResourceID[:])
+	m := msg.Message{
+		Source:       msg.ChainId(1),
+		Destination:  msg.ChainId(2),
+		Type:         SimpleMessageTransfer,
+		DepositNonce: msg.Nonce(1),
+		ResourceId:   msg.ResourceId(SimpleMessageResourceID),
+		Payload: []interface{}{
+			relayerAddress,
+			types.Text("hello ton"),
+		},
+	}
 
-	// input, err := json.Marshal(map[string]interface{}{
-	// 	"destinationChainID": "1",
-	// 	"resourceID":         messageType,
-	// 	"depositNonce":       "1",
-	// 	"amount":             "1000000000000",
-	// 	"recipient":          "0xbc5531e87959d836550577fb7e6df9c0546686f9c11c39fe1355490edbf86173",
-	// })
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	if chain.writer.ResolveMessage(m) {
+		t.Log("The message resolved")
+	} else {
+		t.Fatal("The message doesn't resolve")
+	}
 
-	// paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
-	// 	Abi:        burnedTokensHandler.Abi,
-	// 	Signer:     *burnedTokensHandler.Ctx.Signer,
-	// 	IsInternal: true,
-	// 	CallSet: client.CallSet{
-	// 		FunctionName: "deposit",
-	// 		Input:        input,
-	// 	},
-	// }
+	messageType := "0x" + hex.EncodeToString(m.ResourceId[:])
+	dataStr := "0x" + hex.EncodeToString([]byte(m.Payload[1].(types.Text)))
 
-	// resultOfEncodeMessageBody, err := chain.conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	messageHandlerAbi, err := messageHandlerContract.Abi()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// _, err = wallet.BurnByOwner("1000000000000", "100000000", burnedTokensHandlerAddress, resultOfEncodeMessageBody.Body).Send(messageCallback)
+	input, err := json.Marshal(map[string]interface{}{
+		"chainId":     m.Destination,
+		"nonce":       m.DepositNonce,
+		"messageType": messageType,
+		"data":        dataStr,
+	})
+	if err != nil {
+		t.Fatal("failed to construct SimpleMessageTransfer data", "chainId", m.Destination, "error", err)
+	}
+	paramsOfEncodeMessageBody := client.ParamsOfEncodeMessageBody{
+		Abi:    *messageHandlerAbi,
+		Signer: *messageHandlerContract.Ctx.Signer,
+		CallSet: client.CallSet{
+			FunctionName: "receiveMessage",
+			Input:        input,
+		},
+	}
 
-	// ========================
+	resultOfEncodeMessageBody, err := chain.conn.Client().AbiEncodeMessageBody(&paramsOfEncodeMessageBody)
+	if err != nil {
+		t.Fatal("failed to encode SimpleMessageTransfer data", "chainId", m.Destination, "error", err)
+	}
 
-	// time.Sleep(time.Second * 5)
+	data := resultOfEncodeMessageBody.Body
 
-	// details, err = rootToken.GetDetails().Call()
-	// fmt.Printf("\ndetails: %#v\n", details)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	proposalAddress, err := epoch.GetProposalAddress("2", "1", data).Call()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// wdetails, err := wallet.GetDetails().Call()
-	// fmt.Printf("\nwdetails: %#v\n", wdetails)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	fmt.Printf("\n proposalAddress: %s \n", proposalAddress)
 
 	chain.conn.Client().Close()
 }

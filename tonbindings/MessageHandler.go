@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	MessageHandlerAbi = "{\"ABI version\":2,\"data\":[],\"events\":[{\"inputs\":[{\"name\":\"chainId\",\"type\":\"uint8\"},{\"name\":\"nonce\",\"type\":\"uint64\"},{\"name\":\"messageType\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"uint256\"}],\"name\":\"ProposalExecuted\",\"outputs\":[]}],\"functions\":[{\"inputs\":[{\"name\":\"_proposalCode\",\"type\":\"cell\"},{\"name\":\"_bridgeVoteControllerAddress\",\"type\":\"address\"},{\"name\":\"_bridgeVoteControllerPubKey\",\"type\":\"uint256\"}],\"name\":\"constructor\",\"outputs\":[]},{\"inputs\":[{\"name\":\"proposalPubKey\",\"type\":\"uint256\"},{\"name\":\"chainId\",\"type\":\"uint8\"},{\"name\":\"nonce\",\"type\":\"uint64\"},{\"name\":\"messageType\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"cell\"}],\"name\":\"executeProposal\",\"outputs\":[]},{\"inputs\":[{\"name\":\"chainId\",\"type\":\"uint8\"},{\"name\":\"nonce\",\"type\":\"uint64\"},{\"name\":\"messageType\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"uint256\"}],\"name\":\"receiveMessage\",\"outputs\":[]}],\"header\":[\"time\"]}"
-	MessageHandlerTvc = "te6ccgECFgEAA6MAAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAib/APSkICLAAZL0oOGK7VNYMPShCAQBCvSkIPShBQIJngAAAAoHBgA9TtRNDT/9M/0wDU+kDXC//4bPhr+Gp/+GH4Zvhj+GKAA9X4QsjL//hDzws/+EbPCwD4SvhL+ExeIMzOy//J7VSAIBIAwJAZz/f40IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhpIe1E0CDXScIBjhvT/9M/0wDU+kDXC//4bPhr+Gp/+GH4Zvhj+GIKAf6ORfQFyMn4ao0IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhrcPhscAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeLTAAGfgQIA1xgg+QFY+EL5EPKo3tM/AY4d+EMhuSCfMCD4I4ED6KiCCBt3QKC53pL4Y+Aw8jTYCwA80x8hwQMighD////9vLGTW/I84AHwAfhHbpMw8jzeAgEgEA0BCbw2SA8cDgH6+EFujm3tRNAg10nCAY4b0//TP9MA1PpA1wv/+Gz4a/hqf/hh+Gb4Y/hijkX0BcjJ+GqNCGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT4a3D4bHABgED0DvK91wv/+GJw+GNw+GZ/+GHi3vhG8nNx+GbU+kAPAETXDf+V1NHQ0//f0SIiIvgAIvhqIfhrIPhsXwNfA/AJf/hnAgEgExEB8bqELXGPhBbpLwCt7T/9MH0z/XDf+V1NHQ0//f1NEkJCQjbfhMyMv/cFiAQPRDI8jLB3FYgED0QyLIyz9yWIBA9EP4S3NYgED0FiF0WIBA9BfI9ADJ+ErIz4SA9AD0AM+ByfhJ+kJvE9cL/yH5ALry4GX4KMjPhQjOgSAFSNBFAX14QAAAAAAAAAAAAAAAAAAc8Wz4HPgybPFMlw+wBfCpLwCd5/+GcCAUgVFADJt9kZIfTB9M/0//XDf+V1NHQ0//f0fhJ+kJvE9cL//go+kJvE9cL/7ry4GTIi9wAAAAAAAAAAAAAAAAgzxbPgc+Bz5CJijO6JM8LByPPCz8izwv/Ic8L/8lx+wBfBJLwCd5/+GeAAkNtwItDTA/pAMPhpqTgA+ER/b3GCCJiWgG9ybW9zcW90+GTcIccA3CHTHyHdIcEDIoIQ/////byxk1vyPOAB8AH4R26TMPI83g=="
+	MessageHandlerAbi = "{\"ABI version\":2,\"data\":[],\"events\":[{\"inputs\":[{\"name\":\"chainId\",\"type\":\"uint8\"},{\"name\":\"nonce\",\"type\":\"uint64\"},{\"name\":\"messageType\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"uint256\"}],\"name\":\"ProposalExecuted\",\"outputs\":[]}],\"functions\":[{\"inputs\":[{\"name\":\"_proposalCode\",\"type\":\"cell\"},{\"name\":\"_epochControllerPubKey\",\"type\":\"uint256\"}],\"name\":\"constructor\",\"outputs\":[]},{\"inputs\":[{\"name\":\"epochAddress\",\"type\":\"address\"},{\"name\":\"chainId\",\"type\":\"uint8\"},{\"name\":\"nonce\",\"type\":\"uint64\"},{\"name\":\"messageType\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"cell\"}],\"name\":\"executeProposal\",\"outputs\":[]},{\"inputs\":[{\"name\":\"chainId\",\"type\":\"uint8\"},{\"name\":\"nonce\",\"type\":\"uint64\"},{\"name\":\"messageType\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"uint256\"}],\"name\":\"receiveMessage\",\"outputs\":[]}],\"header\":[\"time\"]}"
+	MessageHandlerTvc = "te6ccgECEQEAAs0AAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgBCj/AIrtUyDjAyDA/+MCIMD+4wLyCw8FBBAC1o0IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhpIds80wABn4ECANcYIPkBWPhC+RDyqN7TPwGOHfhDIbkgnzAg+COBA+iogggbd0Cgud6TIPhj4PI02DDTHwHbPPhHbvJ8CAYBPCLQ0wP6QDD4aak4ANwhxwDcIdMfId0B2zz4R27yfAYDPCCCEA6w50W64wIgghAPZGSHuuMCIIIQU6uwq7rjAgsKBwJEMPhBbuMA+Ebyc3H4ZtTT/9EhIfgAIfhqIPhrW1vbPH/4ZwgNAVDtRNAg10nCAY4b0//TP9MA1NP/1wsH+Gz4a/hqf/hh+Gb4Y/hijoDiCQFK9AWI+Gpw+Gtw+GxwAYBA9A7yvdcL//hicPhjcPhmf/hhgGX4bBABvjDTB9M/0//XDf+V1NHQ0//f0fhJ+kJvE9cL//go+kJvE9cL/7ry4G/Ii9wAAAAAAAAAAAAAAAAgzxbPgc+Bz5CJijO6JM8LByPPCz8izwv/Ic8L/8lw+wBfBOMAf/hnDQL2MPhBbuMA+kDTB9M/1w3/ldTR0NP/39TRJCQkI234S8jL/3BYgED0QyPIywdxWIBA9EMiyMs/cliAQPRDJHNYgED0FiF0WIBA9BfI9ADJ+ErIz4SA9AD0AM+ByfhMIMECkzCAZN74SfpCbxPXC/8i+QC68vT4KMjPhQjODgwBVo0EUBfXhAAAAAAAAAAAAAAAAAABzxbPgc+DJs8UyXD7ADBfBF8F4wB/+GcNAD74QsjL//hDzws/+EbPCwD4SvhL+ExeIMzL/8sHye1UADztRNDT/9M/0wDU0//XCwf4bPhr+Gp/+GH4Zvhj+GIBCvSkIPShEAAA"
 )
 
 type MessageHandlerContract struct {
@@ -21,9 +21,8 @@ type MessageHandler struct {
 	Ctx ContractContext
 }
 type MessageHandlerDeployParams struct {
-	ProposalCode                string
-	BridgeVoteControllerAddress string
-	BridgeVoteControllerPubKey  string
+	ProposalCode          string
+	EpochControllerPubKey string
 }
 
 func (c *MessageHandler) Code() (*client.ResultOfGetCodeFromTvc, error) {
@@ -38,9 +37,8 @@ func (c *MessageHandler) Abi() (*client.Abi, error) {
 }
 func (c *MessageHandler) Address() (string, error) {
 	messageHandlerDeployParams := MessageHandlerDeployParams{
-		BridgeVoteControllerAddress: "0:0000000000000000000000000000000000000000000000000000000000000000",
-		BridgeVoteControllerPubKey:  "0x7",
-		ProposalCode:                "te6ccgEBAQEAOgAAb8AP8AxBKu/bcRJNoYhaIb6rV2wlmZXVB48QbP/KW5bki0ICXcMBftcYAAAAAAAAAB2LXmIPSAAE",
+		EpochControllerPubKey: "0x7",
+		ProposalCode:          "te6ccgEBAQEAOgAAb8AP8AxBKu/bcRJNoYhaIb6rV2wlmZXVB48QbP/KW5bki0ICXcMBftcYAAAAAAAAAB2LXmIPSAAE",
 	}
 	encodeMessage, err := c.DeployEncodeMessage(&messageHandlerDeployParams)
 	if err != nil {
@@ -75,7 +73,7 @@ func (c *MessageHandler) DeployEncodeMessage(messageHandlerDeployParams *Message
 		Tvc:         MessageHandlerTvc,
 		WorkchainID: c.Ctx.WorkchainID,
 	}
-	params := json.RawMessage(fmt.Sprintf("{\"_proposalCode\": \"%s\" ,\"_bridgeVoteControllerAddress\": \"%s\" ,\"_bridgeVoteControllerPubKey\": \"%s\" }", messageHandlerDeployParams.ProposalCode, messageHandlerDeployParams.BridgeVoteControllerAddress, messageHandlerDeployParams.BridgeVoteControllerPubKey))
+	params := json.RawMessage(fmt.Sprintf("{\"_proposalCode\": \"%s\" ,\"_epochControllerPubKey\": \"%s\" }", messageHandlerDeployParams.ProposalCode, messageHandlerDeployParams.EpochControllerPubKey))
 	callSet := client.CallSet{
 		FunctionName: "constructor",
 		Input:        params,
@@ -128,8 +126,8 @@ func (contract *MessageHandlerContract) CallContractMethod(methodName string, in
 		},
 	}
 }
-func (contract *MessageHandlerContract) ExecuteProposal(proposalPubKey string, chainId string, nonce string, messageType string, data string) *ContractMethod {
-	input := fmt.Sprintf("{\"proposalPubKey\": \"%s\" ,\"chainId\": \"%s\" ,\"nonce\": \"%s\" ,\"messageType\": \"%s\" ,\"data\": \"%s\" }", proposalPubKey, chainId, nonce, messageType, data)
+func (contract *MessageHandlerContract) ExecuteProposal(epochAddress string, chainId string, nonce string, messageType string, data string) *ContractMethod {
+	input := fmt.Sprintf("{\"epochAddress\": \"%s\" ,\"chainId\": \"%s\" ,\"nonce\": \"%s\" ,\"messageType\": \"%s\" ,\"data\": \"%s\" }", epochAddress, chainId, nonce, messageType, data)
 	return contract.CallContractMethod("executeProposal", input)
 }
 func (contract *MessageHandlerContract) ReceiveMessage(chainId string, nonce string, messageType string, data string) *ContractMethod {

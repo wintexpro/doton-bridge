@@ -3,14 +3,13 @@ package tonbindings
 import (
 	"encoding/json"
 	"fmt"
-
 	client "github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 )
 
 const (
 	SenderAbi = "{\"ABI version\":2,\"data\":[],\"events\":[],\"functions\":[{\"inputs\":[{\"name\":\"destination\",\"type\":\"address\"},{\"name\":\"bounce\",\"type\":\"bool\"},{\"name\":\"value\",\"type\":\"uint128\"},{\"name\":\"data\",\"type\":\"uint256\"},{\"name\":\"destinationChainId\",\"type\":\"uint256\"}],\"name\":\"sendData\",\"outputs\":[]},{\"inputs\":[],\"name\":\"constructor\",\"outputs\":[]}],\"header\":[\"time\"]}"
-	SenderTvc = "te6ccgECEAEAAlwAAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAib/APSkICLAAZL0oOGK7VNYMPShCAQBCvSkIPShBQIJngAAAAoHBgAnTtRNDT/9M/0wDRf/hh+Gb4Y/higAJV+ELIy//4Q88LP/hGzwsAye1UgCASALCQHy/3+NCGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT4aSHtRNAg10nCAY4Q0//TP9MA0X/4Yfhm+GP4Yo4Y9AVwAYBA9A7yvdcL//hicPhjcPhmf/hh4tMAAY4SgQIA1xgg+QFY+EIg+GX5EPKo3tM/AQoAfI4d+EMhuSCfMCD4I4ED6KiCCBt3QKC53pL4Y+Aw8jTY0x8hwQMighD////9vLGTW/I84AHwAfhHbpMw8jzeAgEgDQwAnb1Fqvn/wgt0ca9qJoEGuk4QDHCGn/6Z/pgGi//DD8M3wx/DFHDHoCuADAIHoHeV7rhf/8MTh8Mbh8Mz/8MPFvfCN5Obj8M2j8AHgEv/wzwCASAPDgDnu/VJio+EFukvAK3vpA0gDXDX+V1NHQ03/f1w3/ldTR0NP/39cN/5XU0dDT/9/R+EL4RSBukjBw3rry4Gz4ACIlJcjPhYDKAHPPQM4B+gKAac9Az4HPg8jPkYZ8I24jzwv/Is8L/83JcfsAXwWS8Anef/hngAkN1wItDTA/pAMPhpqTgA+ER/b3GCCJiWgG9ybW9zcW90+GTcIccA3CHTHyHdIcEDIoIQ/////byxk1vyPOAB8AH4R26TMPI83g=="
+	SenderTvc = "te6ccgECDgEAAbwAAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgBCj/AIrtUyDjAyDA/+MCIMD+4wLyCwwFBA0CkiHbPNMAAY4SgQIA1xgg+QFY+EIg+GX5EPKo3tM/AY4d+EMhuSCfMCD4I4ED6KiCCBt3QKC53pMg+GPg8jTYMNMfAds8+Edu8nwIBgE0ItDXCwOpOADcIccA3CHTHyHdAds8+Edu8nwGAiggghA/VJiouuMCIIIQaLVfP7rjAgkHAiow+EFu4wD4RvJzcfhm0fgA2zx/+GcICgBq7UTQINdJwgGOENP/0z/TANF/+GH4Zvhj+GKOGPQFcAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeIC2DD4QW7jAPpA0gDXDX+V1NHQ03/f1w3/ldTR0NP/39cN/5XU0dDT/9/R+EL4RSBukjBw3rry4Gz4ACIlJcjPhYDKAHPPQM4B+gKAac9Az4HPg8jPkYZ8I24jzwv/Is8L/83JcPsAXwXjAH/4ZwsKACT4QsjL//hDzws/+EbPCwDJ7VQAJu1E0NP/0z/TANF/+GH4Zvhj+GIBCvSkIPShDQAA"
 )
 
 type SenderContract struct {

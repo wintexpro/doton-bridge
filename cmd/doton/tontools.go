@@ -27,8 +27,6 @@ import (
 
 var ZERO_ADDRESS = "0:0000000000000000000000000000000000000000000000000000000000000000"
 
-// handleDeployCmd deploy the set of ton contracts
-
 func handleSendGrams(ctx *cli.Context, dHandler *dataHandler) error {
 	log.Info("Send grams...")
 	return execute(ctx, dHandler, sendGrams)
@@ -97,10 +95,11 @@ func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.C
 			workchainIDNull := null.Int32From(int32(workchainID))
 
 			signer := client.Signer{
-				Type: client.KeysSignerType,
-				Keys: client.KeyPair{
-					Public: kp.PublicKey(),
-					Secret: kp.SecretKey(),
+				EnumTypeValue: client.KeysSigner{
+					Keys: client.KeyPair{
+						Public: kp.PublicKey(),
+						Secret: kp.SecretKey(),
+					},
 				},
 			}
 
@@ -118,13 +117,13 @@ func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.C
 func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	var (
 		accessControllerAddress, senderAddress, tip3HandlerAddress,
-		bridgeAddress, relayerAddress, receiverAddress, bridgeVoteControllerAddress, messageHandlerAddress,
-		burnedTokensHandlerAddress, rootTokenContractAddress string
+		bridgeAddress, relayerAddress, receiverAddress, messageHandlerAddress,
+		burnedTokensHandlerAddress, rootTokenContractAddress, epochControllerAddress string
 	)
 
 	messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
 		return func(event *client.ProcessingEvent) {
-			logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+			// logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
 		}
 	}
 
@@ -135,10 +134,11 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 	}
 
 	proposalContract := Proposal{Ctx: ctx}
+	epochContract := Epoch{Ctx: ctx}
+	epochControllerContract := EpochController{Ctx: ctx}
 	senderContract := Sender{Ctx: ctx}
 	receiverContract := Receiver{Ctx: ctx}
 	accessControllerContract := AccessController{Ctx: ctx}
-	bridgeVoteControllerContract := BridgeVoteController{Ctx: ctx}
 	bridgeContract := Bridge{Ctx: ctx}
 	relayerContract := Relayer{Ctx: ctx}
 	tip3HandlerContract := Tip3Handler{Ctx: ctx}
@@ -147,15 +147,8 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 	messageHandlerContract := MessageHandler{Ctx: ctx}
 	burnedTokensHandlerContract := BurnedTokensHandler{Ctx: ctx}
 
-	walletCode, err := tonTokenWalletContract.Code()
-	if err != nil {
-		return err
-	}
+	var err error
 
-	var proposalCode *client.ResultOfGetCodeFromTvc
-	if proposalCode, err = proposalContract.Code(); err != nil {
-		return err
-	}
 	if burnedTokensHandlerAddress, err = burnedTokensHandlerContract.Address(); err != nil {
 		return err
 	}
@@ -168,7 +161,7 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 	if accessControllerAddress, err = accessControllerContract.Address(); err != nil {
 		return err
 	}
-	if bridgeVoteControllerAddress, err = bridgeVoteControllerContract.Address(); err != nil {
+	if epochControllerAddress, err = epochControllerContract.Address(); err != nil {
 		return err
 	}
 	if bridgeAddress, err = bridgeContract.Address(); err != nil {
@@ -178,6 +171,25 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 		return err
 	}
 	if tip3HandlerAddress, err = tip3HandlerContract.Address(); err != nil {
+		return err
+	}
+
+	if messageHandlerAddress, err = messageHandlerContract.Address(); err != nil {
+		return err
+	}
+
+	walletCode, err := tonTokenWalletContract.Code()
+	if err != nil {
+		return err
+	}
+
+	var proposalCode *client.ResultOfGetCodeFromTvc
+	if proposalCode, err = proposalContract.Code(); err != nil {
+		return err
+	}
+
+	var epochCode *client.ResultOfGetCodeFromTvc
+	if epochCode, err = epochContract.Code(); err != nil {
 		return err
 	}
 
@@ -200,7 +212,7 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 	fmt.Printf("sender: %s \n", senderAddress)
 	fmt.Printf("receiver: %s \n", receiverAddress)
 	fmt.Printf("accessController: %s \n", accessControllerAddress)
-	fmt.Printf("bridgeVoteController: %s \n", bridgeVoteControllerAddress)
+	fmt.Printf("epochControllerAddress: %s \n", epochControllerAddress)
 	fmt.Printf("bridge: %s \n", bridgeAddress)
 	fmt.Printf("relayer: %s \n", relayerAddress)
 	fmt.Printf("rootTokenContract: %s \n", rootTokenContractAddress)
@@ -216,63 +228,69 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 	); err != nil {
 		return err
 	}
-	if _, err = bridgeVoteControllerContract.Deploy(
-		&BridgeVoteControllerDeployParams{
-			ProposalCode:         proposalCode.Code,
-			DeployInitialValue:   "2000000000",
-			PublicKey:            "0x" + signer.Keys.Public,
-			ProposalPublicKey:    "0x" + signer.Keys.Public,
-			ProposalVotersAmount: "0x1",
-			BridgeAddress:        bridgeAddress,
-		}, messageCallback("bridgeVoteControllerContract.Deploy"),
-	); err != nil {
+	time.Sleep(time.Second)
+	// epochControllerDeployParams *EpochControllerDeployParams, messageCallback
+	if _, err = epochControllerContract.Deploy(&EpochControllerDeployParams{
+		EpochCode:            epochCode.Code,
+		ProposalCode:         proposalCode.Code,
+		DeployInitialValue:   "2000000000",
+		PublicKey:            "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
+		ProposalVotersAmount: "0x1",
+		BridgeAddress:        bridgeAddress,
+		FirstEraDuration:     "0xa",
+		SecondEraDuration:    "0xa",
+	}, messageCallback("epochControllerContract.Deploy")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 	if _, err = bridgeContract.Deploy(
 		&BridgeDeployParams{
 			RelayerInitState:        RelayerTvc,
 			AccessControllerAddress: accessControllerAddress,
-			VoteControllerAddress:   bridgeVoteControllerAddress,
+			VoteControllerAddress:   epochControllerAddress,
 		}, messageCallback("bridgeContract.Deploy"),
 	); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 	if _, err = relayerContract.Deploy(
 		&RelayerDeployParams{
 			AccessControllerAddress: accessControllerAddress,
-			MyPublicKey:             "0x" + signer.Keys.Public,
+			MyPublicKey:             "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
 			MyInitState:             RelayerTvc,
 			BridgeAddress:           bridgeAddress,
 		}, messageCallback("relayerContract.Deploy"),
 	); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 	if _, err := receiverContract.Deploy(messageCallback("receiverContract.Deploy")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 	if _, err = senderContract.Deploy(messageCallback("senderContract.Deploy")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 	if _, err = messageHandlerContract.Deploy(
 		&MessageHandlerDeployParams{
-			ProposalCode:                proposalCode.Code,
-			BridgeVoteControllerAddress: bridgeVoteControllerAddress,
-			BridgeVoteControllerPubKey:  "0x" + signer.Keys.Public,
+			ProposalCode:          proposalCode.Code,
+			EpochControllerPubKey: "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
 		}, messageCallback("messageHandlerContract.Deploy"),
 	); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 	if _, err = tip3HandlerContract.Deploy(
 		&Tip3HandlerDeployParams{
-			ProposalCode:                proposalCode.Code,
-			BridgeVoteControllerAddress: bridgeVoteControllerAddress,
-			BridgeVoteControllerPubKey:  "0x" + signer.Keys.Public,
-			Tip3RootAddress:             rootTokenContractAddress,
+			ProposalCode:          proposalCode.Code,
+			EpochControllerPubKey: "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
+			Tip3RootAddress:       rootTokenContractAddress,
 		}, messageCallback("tip3HandlerContract.Deploy"),
 	); err != nil {
 		return err
 	}
-
+	time.Sleep(time.Second)
 	// var burnedTokensHandler *BurnedTokensHandlerContract
 	if _, err = burnedTokensHandlerContract.Deploy(
 		&BurnedTokensHandlerDeployParams{
@@ -280,6 +298,7 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 		}, messageCallback("burnedTokensHandlerContract.Deploy"),
 	); err != nil {
 		return err
+
 	}
 	rootTokenContractDeployParams := RootTokenContractDeployParams{
 		Rootpublickey:    "0x0",
@@ -289,6 +308,7 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 	if _, err = rootTokenContract.Deploy(&rootTokenContractDeployParams, rootTokenContractInitVars, messageCallback("rootTokenContract.Deploy")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 
 	return nil
 }
@@ -299,7 +319,7 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 
 	messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
 		return func(event *client.ProcessingEvent) {
-			logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+			// logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
 		}
 	}
 
@@ -352,32 +372,31 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 	if err != nil {
 		return err
 	}
-
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second)
 
 	if _, err = relayer.BridgeSetHandler("0x"+hex.EncodeToString(SimpleMessageResourceID[:]), messageHandlerAddress).Send(messageCallback("BridgeSetHandler(SimpleMessageResourceID)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
 
 	if _, err = relayer.BridgeSetHandler("0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00", tip3HandlerAddress).Send(messageCallback("BridgeSetHandler(Tip3ResourceID)")); err != nil {
 		return err
 	}
-
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second)
 
 	result, err := bridge.GetHandlerAddressByMessageType("0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00").Call()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("\n\n %s Handler address: %#v\n\n", "0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00", result)
+	fmt.Printf("\n %s Handler address: %#v", "0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00", result)
 
 	result, err = bridge.GetHandlerAddressByMessageType("0x" + hex.EncodeToString(SimpleMessageResourceID[:])).Call()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("\n\n %s Handler address: %#v\n\n", "0x"+hex.EncodeToString(SimpleMessageResourceID[:]), result)
+	fmt.Printf("\n %s Handler address: %#v", "0x"+hex.EncodeToString(SimpleMessageResourceID[:]), result)
 
 	return nil
 }
@@ -385,13 +404,14 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	var (
 		accessControllerAddress, senderAddress, tip3HandlerAddress, tonTokenWalletAddress,
-		bridgeAddress, relayerAddress, receiverAddress, bridgeVoteControllerAddress, messageHandlerAddress,
-		burnedTokensHandlerAddress, rootTokenContractAddress string
+		bridgeAddress, relayerAddress, receiverAddress, messageHandlerAddress,
+		burnedTokensHandlerAddress, rootTokenContractAddress, epochControllerAddress string
 	)
 
 	messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
 		return func(event *client.ProcessingEvent) {
-			logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+			logger.Info("Message status:", "label", eventLabel, "event", event)
+			// logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
 		}
 	}
 
@@ -406,10 +426,10 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 		WorkchainID: workchainID,
 	}
 
+	epochControllerContract := EpochController{Ctx: ctx}
 	senderContract := Sender{Ctx: ctx}
 	receiverContract := Receiver{Ctx: ctx}
 	accessControllerContract := AccessController{Ctx: ctx}
-	bridgeVoteControllerContract := BridgeVoteController{Ctx: ctx}
 	bridgeContract := Bridge{Ctx: ctx}
 	relayerContract := Relayer{Ctx: ctx}
 	tip3HandlerContract := Tip3Handler{Ctx: ctx}
@@ -430,7 +450,7 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 	if accessControllerAddress, err = accessControllerContract.Address(); err != nil {
 		return err
 	}
-	if bridgeVoteControllerAddress, err = bridgeVoteControllerContract.Address(); err != nil {
+	if epochControllerAddress, err = epochControllerContract.Address(); err != nil {
 		return err
 	}
 	if bridgeAddress, err = bridgeContract.Address(); err != nil {
@@ -467,7 +487,7 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 	tonTokenWalletInitVars := &TONTokenWalletInitVars{
 		Rootaddress:     rootTokenContractAddress,
 		Code:            walletCode.Code,
-		Walletpublickey: "0x" + signer.Keys.Public,
+		Walletpublickey: "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
 		Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
 	}
 
@@ -475,39 +495,64 @@ func sendGrams(conn *connection.Connection, workchainID null.Int32, signer *clie
 		return err
 	}
 
+	logger.Info("SendGrams(tonTokenWalletAddress)")
 	if _, err = giver.SendGrams(tonTokenWalletAddress, big.NewInt(200000000000), messageCallback("SendGrams(tonTokenWalletAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(burnedTokensHandlerAddress)")
 	if _, err = giver.SendGrams(burnedTokensHandlerAddress, big.NewInt(200000000000), messageCallback("SendGrams(burnedTokensHandlerAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(accessControllerAddress)")
 	if _, err = giver.SendGrams(accessControllerAddress, big.NewInt(200000000000), messageCallback("SendGrams(accessControllerAddress)")); err != nil {
 		return err
 	}
-	if _, err = giver.SendGrams(bridgeVoteControllerAddress, big.NewInt(200000000000), messageCallback("SendGrams(bridgeVoteControllerAddress)")); err != nil {
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(epochControllerAddress)")
+	if _, err = giver.SendGrams(epochControllerAddress, big.NewInt(200000000000), messageCallback("SendGrams(epochControllerAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(bridgeAddress)")
 	if _, err = giver.SendGrams(bridgeAddress, big.NewInt(200000000000), messageCallback("SendGrams(bridgeAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(relayerAddress)")
 	if _, err = giver.SendGrams(relayerAddress, big.NewInt(200000000000), messageCallback("SendGrams(relayerAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(senderAddress)")
 	if _, err = giver.SendGrams(senderAddress, big.NewInt(200000000000), messageCallback("SendGrams(senderAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(receiverAddress)")
 	if _, err = giver.SendGrams(receiverAddress, big.NewInt(200000000000), messageCallback("SendGrams(receiverAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(tip3HandlerAddress)")
 	if _, err = giver.SendGrams(tip3HandlerAddress, big.NewInt(200000000000), messageCallback("SendGrams(tip3HandlerAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(rootTokenContractAddress)")
 	if _, err = giver.SendGrams(rootTokenContractAddress, big.NewInt(200000000000), messageCallback("SendGrams(rootTokenContractAddress)")); err != nil {
 		return err
 	}
+	time.Sleep(time.Second)
+	logger.Info("SendGrams(messageHandlerAddress)")
 	if _, err = giver.SendGrams(messageHandlerAddress, big.NewInt(200000000000), messageCallback("SendGrams(messageHandlerAddress)")); err != nil {
 		return err
 	}
+
+	time.Sleep(time.Second * 5)
+
+	logger.Info("Exit: 0")
 
 	return nil
 }
@@ -549,7 +594,7 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 		return err
 	}
 
-	addressResult, err := rootToken.GetWalletAddress("0x"+signer.Keys.Public, ZERO_ADDRESS).Call()
+	addressResult, err := rootToken.GetWalletAddress("0x"+signer.EnumTypeValue.(client.KeysSigner).Keys.Public, ZERO_ADDRESS).Call()
 	if err != nil {
 		return err
 	}
@@ -558,7 +603,7 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 	tonTokenWalletInitVars := &TONTokenWalletInitVars{
 		Rootaddress:     rootTokenContractAddress,
 		Code:            walletCode.Code,
-		Walletpublickey: "0x" + signer.Keys.Public,
+		Walletpublickey: "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
 		Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
 	}
 
@@ -568,6 +613,9 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 	}
 
 	result, err := wallet.GetDetails().Call()
+	if err != nil {
+		return err
+	}
 
 	amount := new(big.Int)
 	amount.SetString(result.(Result)["value0"].(WalletDetails)["balance"].(string), 10)
@@ -623,7 +671,7 @@ func sendTokens(amount string, to string, nonce string) func(conn *connection.Co
 			return err
 		}
 
-		addressResult, err := rootToken.GetWalletAddress("0x"+signer.Keys.Public, ZERO_ADDRESS).Call()
+		addressResult, err := rootToken.GetWalletAddress("0x"+signer.EnumTypeValue.(client.KeysSigner).Keys.Public, ZERO_ADDRESS).Call()
 		if err != nil {
 			return err
 		}
@@ -632,7 +680,7 @@ func sendTokens(amount string, to string, nonce string) func(conn *connection.Co
 		tonTokenWalletInitVars := &TONTokenWalletInitVars{
 			Rootaddress:     rootTokenContractAddress,
 			Code:            walletCode.Code,
-			Walletpublickey: "0x" + signer.Keys.Public,
+			Walletpublickey: "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
 			Owneraddress:    "0:0000000000000000000000000000000000000000000000000000000000000000",
 		}
 
@@ -691,7 +739,7 @@ func sendTokens(amount string, to string, nonce string) func(conn *connection.Co
 
 		messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
 			return func(event *client.ProcessingEvent) {
-				logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+				// logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
 			}
 		}
 
@@ -704,7 +752,7 @@ func sendTokens(amount string, to string, nonce string) func(conn *connection.Co
 func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
 	messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
 		return func(event *client.ProcessingEvent) {
-			logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+			// logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
 		}
 	}
 
@@ -738,7 +786,7 @@ func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *c
 	tonTokenWalletInitVars := &TONTokenWalletInitVars{
 		Rootaddress:     rootTokenContractAddress,
 		Code:            walletCode.Code,
-		Walletpublickey: "0x" + signer.Keys.Public,
+		Walletpublickey: "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
 		Owneraddress:    ZERO_ADDRESS,
 	}
 
@@ -747,7 +795,7 @@ func deployWallet(conn *connection.Connection, workchainID null.Int32, signer *c
 		return err
 	}
 
-	addressResult, err := rootToken.GetWalletAddress("0x"+signer.Keys.Public, ZERO_ADDRESS).Call()
+	addressResult, err := rootToken.GetWalletAddress("0x"+signer.EnumTypeValue.(client.KeysSigner).Keys.Public, ZERO_ADDRESS).Call()
 	if err != nil {
 		return err
 	}

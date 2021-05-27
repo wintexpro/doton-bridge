@@ -31,21 +31,37 @@ type writer struct {
 	sysErr     chan<- error
 	metrics    *metrics.ChainMetrics
 	extendCall bool // Extend extrinsic calls to substrate with ResourceID.Used for backward compatibility with example pallet.
+	vrfkp      *Keypair
 }
 
-func NewWriter(conn *Connection, log log15.Logger, sysErr chan<- error, m *metrics.ChainMetrics, extendCall bool) *writer {
+func NewWriter(conn *Connection, log log15.Logger, sysErr chan<- error, m *metrics.ChainMetrics, extendCall bool, vrfkp *Keypair) *writer {
 	return &writer{
 		conn:       conn,
 		log:        log,
 		sysErr:     sysErr,
 		metrics:    m,
 		extendCall: extendCall,
+		vrfkp:      vrfkp,
 	}
 }
 
 func (w *writer) ResolveMessage(m msg.Message) bool {
 	var prop *proposal
 	var err error
+	var isActive bool
+
+	accountID := types.NewAccountID(w.vrfkp.Public())
+
+	err = w.conn.api.Client.Call(&isActive, "dorr_isActivePk", accountID)
+	if err != nil {
+		w.log.Error(err.Error())
+		isActive = false
+	}
+
+	if !isActive {
+		w.log.Debug("your relayer is not active now", "public key", fmt.Sprintf("%x", w.vrfkp.Public()))
+		return false
+	}
 
 	// Construct the proposal
 	switch m.Type {

@@ -3,14 +3,13 @@ package tonbindings
 import (
 	"encoding/json"
 	"fmt"
-
 	client "github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 )
 
 const (
 	BurnedTokensHandlerAbi = "{\"ABI version\":2,\"data\":[],\"events\":[{\"inputs\":[{\"name\":\"destinationChainID\",\"type\":\"uint8\"},{\"name\":\"resourceID\",\"type\":\"uint256\"},{\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"name\":\"amount\",\"type\":\"uint128\"},{\"name\":\"recipient\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"outputs\":[]}],\"functions\":[{\"inputs\":[{\"name\":\"_tip3RootAddress\",\"type\":\"address\"}],\"name\":\"constructor\",\"outputs\":[]},{\"inputs\":[{\"name\":\"tokens\",\"type\":\"uint128\"},{\"name\":\"payload\",\"type\":\"cell\"},{\"name\":\"sender_public_key\",\"type\":\"uint256\"},{\"name\":\"sender_address\",\"type\":\"address\"},{\"name\":\"wallet_address\",\"type\":\"address\"}],\"name\":\"burnCallback\",\"outputs\":[]},{\"inputs\":[{\"name\":\"destinationChainID\",\"type\":\"uint8\"},{\"name\":\"resourceID\",\"type\":\"uint256\"},{\"name\":\"depositNonce\",\"type\":\"uint64\"},{\"name\":\"amount\",\"type\":\"uint128\"},{\"name\":\"recipient\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[]}],\"header\":[\"time\"]}"
-	BurnedTokensHandlerTvc = "te6ccgECEwEAAysAAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAib/APSkICLAAZL0oOGK7VNYMPShCAQBCvSkIPShBQIJngAAAAoHBgApTtRNDT/9M/0wD4an/4Yfhm+GP4YoAC1fhCyMv/+EPPCz/4Rs8LAPhKAc7J7VSAIBIAwJAYj/f40IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhpIe1E0CDXScIBjhHT/9M/0wD4an/4Yfhm+GP4YgoB/I4+9AWNCGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT4anABgED0DvK91wv/+GJw+GNw+GZ/+GHi0wABn4ECANcYIPkBWPhC+RDyqN7TPwGOHfhDIbkgnzAg+COBA+iogggbd0Cgud6S+GPgMPI02NMfIcEDIgsAMIIQ/////byxk1vyPOAB8AH4R26TMPI83gIBIBINAgEgDw4A4bsd0ndPhBbpLwCt7Tf9TT//pBldTR0PpA3/pBldTR0PpA39H4SfhKxwXy4GQj0NMf0wfT/9M/03/T/zAqIrry4Gf4KMjPhQjOjQRQF9eEAAAAAAAAAAAAAAAAAAHPFs+Bz4MqzxTJcPsAXwvwCX/4Z4AgEgERAA5blCYSdaYPp/+mf64a/yupo6Gm/7+uG/8rqaOhp/+/o/CT9ITeJ64X//BR9ITeJ64X/3XlwMmRF7gAAAAAAAAAAAAAAABBni2fA58DnyH50ISMS54WDkmeF/5HnhZ+RZ4W/kOeF/+S4/YAvgsl4BO8//DPAA97jqypufCC3Ry52omgQa6ThAMcI6f/pn+mAfDU//DD8M3wx/DFHH3oCxoQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACfDU4AMAgegd5XuuF//wxOHwxuHwzP/ww8W98I3k5uPwzfSBo/AAQfDUYeAS//DPAAkN5wItDTA/pAMPhpqTgA+ER/b3GCCJiWgG9ybW9zcW90+GTcIccA3CHTHyHdIcEDIoIQ/////byxk1vyPOAB8AH4R26TMPI83g=="
+	BurnedTokensHandlerTvc = "te6ccgECEAEAAt4AAgE0AwEBAcACAEPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgBCj/AIrtUyDjAyDA/+MCIMD+4wLyCw4FBA8C1o0IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhpIds80wABn4ECANcYIPkBWPhC+RDyqN7TPwGOHfhDIbkgnzAg+COBA+iogggbd0Cgud6TIPhj4PI02DDTHwHbPPhHbvJ8DQYBPCLQ0wP6QDD4aak4ANwhxwDcIdMfId0B2zz4R27yfAYDPCCCEEdWVNy64wIgghBaEwk6uuMCIIIQcd0ndLrjAgsKBwL+MPhBbuMA03/U0//6QZXU0dD6QN/6QZXU0dD6QN/R+EsgwQKTMIBk3vhJ+ErHBfL0I9DTH9MH0//TP9N/0/8wVUBVQFVAVUBVQFVA+EwgwQKTMIBk3isjuvL0+CjIz4UIzo0EUBfXhAAAAAAAAAAAAAAAAAABzxbPgc+DKs8UyQkIARhw+wBfBl8F2zx/+GcMAD7tRNDT/9M/0wD6QNMH1wsH+Gz4a/hqf/hh+Gb4Y/hiAdow0wfT/9M/1w1/ldTR0NN/39cN/5XU0dDT/9/R+En6Qm8T1wv/+Cj6Qm8T1wv/uvLgZsiL3AAAAAAAAAAAAAAAACDPFs+Bz4HPkPzoQkYlzwsHJM8L/yPPCz8izwt/Ic8L/8lw+wBfBeMAf/hnDAI2MPhBbuMA+Ebyc3H4ZvpA0fgAIPhqMNs8f/hnDQwAPvhCyMv/+EPPCz/4Rs8LAPhK+Ev4TF4gzssHywfJ7VQA6u1E0CDXScIBjhzT/9M/0wD6QNMH1wsH+Gz4a/hqf/hh+Gb4Y/hijkz0BY0IYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPhqcPhrcPhscAGAQPQO8r3XC//4YnD4Y3D4Zn/4YYBl+GuAZ/hs4gEK9KQg9KEPAAA="
 )
 
 type BurnedTokensHandlerContract struct {
@@ -42,20 +41,6 @@ func (c *BurnedTokensHandler) Address() (string, error) {
 		return "", err
 	}
 	return encodeMessage.Address, nil
-}
-func (c *BurnedTokensHandler) DecodeMessageBody(body string, isInternal bool) (*client.DecodedMessageBody, error) {
-	abi, err := c.Abi()
-	if err != nil {
-		return nil, err
-	}
-
-	params := client.ParamsOfDecodeMessageBody{
-		Abi:        *abi,
-		Body:       body,
-		IsInternal: isInternal,
-	}
-
-	return c.Ctx.Conn.AbiDecodeMessageBody(&params)
 }
 func (c *BurnedTokensHandler) New(address string) (*BurnedTokensHandlerContract, error) {
 	abi, err := c.Abi()
