@@ -3,6 +3,7 @@ package tonbindings
 import (
 	"encoding/json"
 	"fmt"
+
 	client "github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 )
@@ -167,6 +168,9 @@ func (contract *SenderContract) call(functionName string, input string) (*client
 		return nil, err
 	}
 	var account ContractAccount
+	if len(res.Result) == 0 {
+		return &client.DecodedOutput{}, nil
+	}
 	if err := json.Unmarshal(res.Result[0], &account); err != nil {
 		return nil, err
 	}

@@ -228,6 +228,9 @@ func (contract *RelayerContract) call(functionName string, input string) (*clien
 		return nil, err
 	}
 	var account ContractAccount
+	if len(res.Result) == 0 {
+		return &client.DecodedOutput{}, nil
+	}
 	if err := json.Unmarshal(res.Result[0], &account); err != nil {
 		return nil, err
 	}

@@ -3,9 +3,11 @@
 
 # Build TON SDK
 
-FROM phusion/baseimage:0.10.2 as sdk-builder
+FROM phusion/baseimage:0.11 as sdk-builder
 ARG PROFILE=release
 WORKDIR /ton
+
+ENV RUST_TOOLCHAIN=nightly-2020-11-19
 
 RUN apt-get update && \
 	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
@@ -13,9 +15,11 @@ RUN apt-get update && \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 	export PATH="$PATH:$HOME/.cargo/bin" && \
 	rustup default stable
-RUN git clone --depth 1 --branch 1.8.0 https://github.com/tonlabs/TON-SDK.git && \
+RUN git clone --depth 1 --branch 1.14.1 https://github.com/tonlabs/TON-SDK.git && \
   export PATH="$PATH:$HOME/.cargo/bin" && \
   cd TON-SDK && \
+  rustup toolchain install $RUST_TOOLCHAIN && \
+  rustup default $RUST_TOOLCHAIN && \
   cargo build "--$PROFILE"
 
 # Build bridge
@@ -40,7 +44,7 @@ RUN cd cmd/doton && go build -o /bridge .
 # Make small image
 
 # FROM debian:stretch-slim
-FROM phusion/baseimage:0.10.2 AS final
+FROM phusion/baseimage:0.11 AS final
 
 COPY --from=sdk-builder /ton/TON-SDK /TON-SDK
 

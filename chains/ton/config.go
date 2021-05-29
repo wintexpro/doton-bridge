@@ -18,6 +18,7 @@ var (
 	SenderOpt              = "sender"
 	ReceiverOpt            = "receiver"
 	BurnedTokensHandlerOpt = "burnedTokensHandler"
+	EpochVoteControllerOpt = "epochVoteController"
 	ContractsPath          = "contractsPath"
 	WorkchainID            = "workchainID"
 )
@@ -81,6 +82,13 @@ func ParseChainConfig(chainCfg *core.ChainConfig) (*Config, error) {
 		delete(chainCfg.Opts, BurnedTokensHandlerOpt)
 	} else {
 		return nil, fmt.Errorf("must provide opts.burnedTokensHandler field for ton config")
+	}
+
+	if contract, ok := chainCfg.Opts[EpochVoteControllerOpt]; ok && contract != "" {
+		config.contracts[EpochVoteControllerOpt] = contract
+		delete(chainCfg.Opts, EpochVoteControllerOpt)
+	} else {
+		return nil, fmt.Errorf("must provide opts.epochVoteController field for ton config")
 	}
 
 	if HTTP, ok := chainCfg.Opts["http"]; ok && HTTP == "true" {

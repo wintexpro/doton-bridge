@@ -111,14 +111,28 @@ func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<-
 	writer := NewWriter(conn, cfg, log, kp, stop, sysErr, m)
 	listener := NewListener(conn, bs, cfg, log, stop, sysErr)
 
-	return (&Chain{
+	chain := &Chain{
 		cfg:      chainCfg,
 		conn:     conn,
 		kp:       kp,
 		writer:   writer,
 		listener: listener,
 		stop:     stop,
-	}), err
+	}
+
+	vrfkp, err := VrfGenerateKeypair()
+	if err != nil {
+		return nil, err
+	}
+
+	err = chain.writer.SendVrfPublicKey(vrfkp)
+	if err != nil {
+		return nil, err
+	}
+
+	chain.writer.CheckEpoch(vrfkp)
+
+	return chain, err
 }
 
 func (c *Chain) SetRouter(r *core.Router) {

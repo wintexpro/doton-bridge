@@ -235,10 +235,10 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 		ProposalCode:         proposalCode.Code,
 		DeployInitialValue:   "2000000000",
 		PublicKey:            "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
-		ProposalVotersAmount: "0x1",
+		ProposalVotersAmount: "0x2",
 		BridgeAddress:        bridgeAddress,
-		FirstEraDuration:     "0xa",
-		SecondEraDuration:    "0xa",
+		FirstEraDuration:     "0x3e",
+		SecondEraDuration:    "0x3e",
 	}, messageCallback("epochControllerContract.Deploy")); err != nil {
 		return err
 	}

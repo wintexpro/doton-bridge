@@ -27,6 +27,9 @@ After making sure TON OS SE and substrate services are running, you should run s
 ```sh
 $ make run-setup
 ```
+```sh
+$ make run-setup-bridge
+```
 
 That executes to send initial value to contracts and deploy them to local TON node, also set up a substrate node for interacting with DOTON protocol. After setup, this command attaches you to a docker container with [tonos-cli](https://github.com/tonlabs/tonos-cli) and [halva-cli](https://github.com/halva-suite/halva) tools.
 
@@ -36,6 +39,14 @@ At last, you can run the relay node by running the command (please, make sure th
 
 ```sh
 $ make run-bridge
+```
+
+## Run local polkadot UI
+
+If you need to run local polkadotjs UI, you can run command:
+
+```sh
+$ docker run --rm -it --name polkadot-ui --network doton-local-network_default --link doton-sub-chain -p 8001:80 jacogr/polkadot-js-apps:0.79.1
 ```
 
 ## Setting up Polkadot JS Apps
@@ -64,7 +75,12 @@ You will need to add these definitions to the [developer settings](https://polka
   },
   "TokenId": "U256",
   "Address": "AccountId",
-  "LookupSource": "AccountId"
+  "LookupSource": "AccountId",
+  "VrfResult": {
+    "pk": "Vec<u8>",
+    "val": "Vec<u8>",
+    "proof": "Vec<u8>"
+  }
 }
 ```
 

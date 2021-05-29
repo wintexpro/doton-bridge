@@ -3,6 +3,7 @@ package tonbindings
 import (
 	"encoding/json"
 	"fmt"
+
 	client "github.com/radianceteam/ton-client-go/client"
 	null "github.com/volatiletech/null"
 )
@@ -179,6 +180,19 @@ func (contract *EpochControllerContract) abiEncodeMessage(functionName string, i
 	}
 	return contract.Ctx.Conn.AbiEncodeMessage(&paramsAbiEncodeMessage)
 }
+func (contract *EpochControllerContract) abiEncodeMessageForCall(functionName string, input string) (*client.ResultOfEncodeMessage, error) {
+	callSet := client.CallSet{
+		FunctionName: functionName,
+		Input:        json.RawMessage(input),
+	}
+	paramsAbiEncodeMessage := client.ParamsOfEncodeMessage{
+		Abi:     contract.Abi,
+		Address: null.StringFrom(contract.Address),
+		CallSet: &callSet,
+		Signer:  client.Signer{EnumTypeValue: client.NoneSigner{}},
+	}
+	return contract.Ctx.Conn.AbiEncodeMessage(&paramsAbiEncodeMessage)
+}
 func (contract *EpochControllerContract) send(functionName string, input string, messageCallback func(event *client.ProcessingEvent)) (string, error) {
 	message, err := contract.abiEncodeMessage(functionName, input)
 	if err != nil {
@@ -195,7 +209,7 @@ func (contract *EpochControllerContract) send(functionName string, input string,
 	return resultProcessingSendMessage.ShardBlockID, nil
 }
 func (contract *EpochControllerContract) call(functionName string, input string) (*client.DecodedOutput, error) {
-	message, err := contract.abiEncodeMessage(functionName, input)
+	message, err := contract.abiEncodeMessageForCall(functionName, input)
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +225,9 @@ func (contract *EpochControllerContract) call(functionName string, input string)
 		return nil, err
 	}
 	var account ContractAccount
+	if len(res.Result) == 0 {
+		return &client.DecodedOutput{}, nil
+	}
 	if err := json.Unmarshal(res.Result[0], &account); err != nil {
 		return nil, err
 	}
@@ -219,6 +236,7 @@ func (contract *EpochControllerContract) call(functionName string, input string)
 		Account: account.Boc,
 		Message: message.Message,
 	}
+
 	resultOfRunTvm, err := contract.Ctx.Conn.TvmRunTvm(&paramsOfRunTvm)
 	if err != nil {
 		return nil, err
