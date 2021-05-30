@@ -27,18 +27,31 @@ After making sure TON OS SE and substrate services are running, you should run s
 ```sh
 $ make run-setup
 ```
-```sh
-$ make run-setup-bridge
-```
 
 That executes to send initial value to contracts and deploy them to local TON node, also set up a substrate node for interacting with DOTON protocol. After setup, this command attaches you to a docker container with [tonos-cli](https://github.com/tonlabs/tonos-cli) and [halva-cli](https://github.com/halva-suite/halva) tools.
 
 Make sure that containers which were launched during previous commands (doton-setup-bridge and doton-setup) stopped their work.
 
-At last, you can run the relay node by running the command (please, make sure the setup scripts were done):
+You need to run the relay nodes by running the command (please, make sure the setup scripts were done):
 
 ```sh
-$ make run-bridge
+$ make run-alice
+```
+
+After making sure alice node is running, you must deploy another 2 relayers
+
+At last, you can run
+
+```sh
+$ CONFIG_NAME=config2.json make deploy-relayer
+$ CONFIG_NAME=config3.json make deploy-relayer
+```
+
+And run they
+
+```sh
+$ make run-bob
+$ make run-charlie
 ```
 
 ## Run local polkadot UI
