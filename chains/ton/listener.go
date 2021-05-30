@@ -202,6 +202,7 @@ func (l *listener) processEvents(prevBlock, currentBlock *ton.BlockType) error {
 func (l *listener) submitMessage(m *msg.Message) {
 	m.Source = l.cfg.id
 
+	l.log.Info("Trying send message", "Source", m.Source, "Destination", m.Destination, "ResourceId", fmt.Sprintf("%x", m.ResourceId), "DepositNonce", m.DepositNonce)
 	err := l.router.Send(*m)
 
 	if err != nil {

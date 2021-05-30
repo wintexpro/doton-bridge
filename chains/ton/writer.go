@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ChainSafe/ChainBridge/tonbindings"
 	. "github.com/ChainSafe/ChainBridge/tonbindings"
 	"github.com/ChainSafe/log15"
 	"github.com/centrifuge/go-substrate-rpc-client/types"
@@ -42,7 +43,7 @@ type writer struct {
 	relayer         *RelayerContract
 	epochController *EpochControllerContract
 	epochContract   *Epoch
-	epoch           *int64
+	epoch           int64
 	queue           []*msg.Message
 }
 
@@ -111,6 +112,7 @@ func NewWriter(conn Connection, cfg *Config, log log15.Logger, kp *ed25519.Keypa
 		relayer:         relayer,
 		epochController: epochController,
 		epochContract:   &epochContract,
+		epoch:           0,
 	}
 }
 
@@ -204,15 +206,13 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 		return false
 	}
 
-	currentEpochNumber := *currentEpochNumberRef
+	currentEpochNumber := currentEpochNumberRef
 
 	if currentEpochNumber > 1 {
 		currentEpochNumber = currentEpochNumber - 1
 	}
 
 	currentEpochNumberAsStr := strconv.FormatInt(currentEpochNumber, 10)
-
-	fmt.Printf("......currentEpochNumberAsStr: %v......\n", currentEpochNumberAsStr)
 
 	epochAddressMap, err := w.epochController.GetEpochAddress(currentEpochNumberAsStr).Call()
 	if err != nil {
@@ -233,8 +233,6 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 		return false
 	}
 
-	fmt.Println("......epoch......")
-
 	resMap, err := epoch.IsChoosen(w.relayer.Address).Call()
 	if err != nil {
 		if err.Error() == "unexpected end of JSON input" {
@@ -246,8 +244,6 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 		return false
 	}
 	isChoosen := resMap.(map[string]interface{})["value0"].(bool)
-
-	fmt.Printf("......isChoosen: %v......\n", isChoosen)
 
 	if !isChoosen {
 		w.log.Info("Your relayer is not active now")
@@ -278,19 +274,19 @@ func (w *writer) GetPublicRandomness() (string, error) {
 	return w.PublicRandomness()
 }
 
-func (w *writer) GetEpochNumber() (*int64, error) {
+func (w *writer) GetEpochNumber() (int64, error) {
 	currentEpochNumberMap, err := w.epochController.CurrentEpochNumber().Call()
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	currentEpochNumberStr := currentEpochNumberMap.(map[string]interface{})["currentEpochNumber"].(string)
 
 	currentEpochNumber, err := strconv.ParseInt(currentEpochNumberStr, 10, 64)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &currentEpochNumber, nil
+	return currentEpochNumber, nil
 }
 
 func (w *writer) SendVrfPublicKey(vrfkp *Keypair) error {
@@ -300,17 +296,17 @@ func (w *writer) SendVrfPublicKey(vrfkp *Keypair) error {
 		return err
 	}
 
-	w.epoch = currentEpochNumber
+	epochNumberAsStr := strconv.FormatInt(currentEpochNumber, 10)
+
+	epochAddress, err := w.GetEpochAddress(epochNumberAsStr)
+	if err != nil {
+		w.log.Error("SendVrfPublicKey: failed to get epoch address", "chainId", w.cfg.id, "error", err)
+		return err
+	}
 
 	publicRandomness, err := w.GetPublicRandomness()
 	if err != nil {
 		w.log.Error("SendVrfPublicKey: failed to get public randomness", "chainId", w.cfg.id, "error", err)
-		return err
-	}
-
-	epochAddress, err := w.GetEpochAddress(strconv.FormatInt(*currentEpochNumber, 10))
-	if err != nil {
-		w.log.Error("SendVrfPublicKey: failed to get epoch address", "chainId", w.cfg.id, "error", err)
 		return err
 	}
 
@@ -328,8 +324,6 @@ func (w *writer) SendVrfPublicKey(vrfkp *Keypair) error {
 		return err
 	}
 
-	fmt.Printf("\n SignUpForEpoch:  Address: %s, Epoch: %s \n", epochAddress, strconv.FormatInt(*currentEpochNumber, 10))
-
 	_, err = w.relayer.SignUpForEpoch(
 		epochAddress,
 		fmt.Sprintf("0x%x", sign[:32]),
@@ -344,7 +338,7 @@ func (w *writer) SendVrfPublicKey(vrfkp *Keypair) error {
 	return nil
 }
 
-func (w *writer) CheckEpoch(vrfkp *Keypair) {
+func (w *writer) CheckEpoch() {
 	ticker := time.NewTicker(6 * time.Second)
 	quit := make(chan struct{})
 
@@ -358,13 +352,96 @@ func (w *writer) CheckEpoch(vrfkp *Keypair) {
 					continue
 				}
 
-				ad, _ := w.GetEpochAddress(strconv.FormatInt(*w.epoch, 10))
-				add, _ := w.GetEpochAddress(strconv.FormatInt(*currentEpochNumber, 10))
+				epochNumberForVoting := strconv.FormatInt(currentEpochNumber-1, 10)
+				epochNumberForRegistration := strconv.FormatInt(currentEpochNumber, 10)
 
-				fmt.Printf("\n Current Epoch: %s , Next Epoch: %s \n", ad, add)
-				fmt.Printf("\n Current Epoch: %s , Next Epoch: %s \n", strconv.FormatInt(*w.epoch, 10), strconv.FormatInt(*currentEpochNumber, 10))
+				epochAddressForVoting, _ := w.GetEpochAddress(epochNumberForVoting)
+				epochAddressForRegistration, _ := w.GetEpochAddress(epochNumberForRegistration)
 
-				if *w.epoch == *currentEpochNumber {
+				epochForVoting, err := w.epochContract.New(epochAddressForVoting, &tonbindings.EpochInitVars{
+					Number:                epochNumberForVoting,
+					VoteControllerAddress: w.epochController.Address,
+				})
+				if err != nil {
+					w.log.Error("failed to initialize epoch contract", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+
+				epochForRegistration, err := w.epochContract.New(epochAddressForRegistration, &tonbindings.EpochInitVars{
+					Number:                epochNumberForRegistration,
+					VoteControllerAddress: w.epochController.Address,
+				})
+				if err != nil {
+					w.log.Error("failed to initialize epoch contract", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+
+				epochForVotingEndsAtMap, err := epochForVoting.FirstEraEndsAt().Call()
+				if err != nil {
+					w.log.Error("failed to get FirstEraEndsAt state", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+				epochForVotingEndsAt := epochForVotingEndsAtMap.(map[string]interface{})["firstEraEndsAt"].(string)
+
+				epochForVotingEndsAtInt, err := strconv.ParseInt(epochForVotingEndsAt, 10, 32)
+				if err != nil {
+					w.log.Error("failed to parse endsAt to int", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+
+				epochForVotingSecondEraEndsAtMap, err := epochForVoting.SecondEraEndsAt().Call()
+				if err != nil {
+					w.log.Error("failed to get FirstEraEndsAt state", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+				epochForVotingSecondEraEndsAt := epochForVotingSecondEraEndsAtMap.(map[string]interface{})["secondEraEndsAt"].(string)
+
+				epochForVotingSecondEraEndsAtInt, err := strconv.ParseInt(epochForVotingSecondEraEndsAt, 10, 32)
+				if err != nil {
+					w.log.Error("failed to parse endsAt to int", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+
+				epochForRegistrationEndsAtMap, err := epochForRegistration.FirstEraEndsAt().Call()
+				if err != nil {
+					w.log.Error("failed to get FirstEraEndsAt state", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+				epochForRegistrationEndsAt := epochForRegistrationEndsAtMap.(map[string]interface{})["firstEraEndsAt"].(string)
+
+				epochForRegistrationEndsAtInt, err := strconv.ParseInt(epochForRegistrationEndsAt, 10, 32)
+				if err != nil {
+					w.log.Error("failed to parse endsAt to int", "chainId", w.cfg.id, "error", err)
+					continue
+				}
+
+				epochForVotingMap, err := epochForVoting.IsChoosen(w.relayer.Address).Call()
+				if err != nil {
+					if err.Error() == "unexpected end of JSON input" {
+						w.log.Error("failed to get IsChoosen", "chainId", w.cfg.id, "relayer", w.relayer.Address, "epoch", epochForVoting.Address, "epochNumber", epochNumberForVoting, "error", errors.New("Epoch is not ready now"))
+					} else {
+						w.log.Error("failed to get IsChoosen", "chainId", w.cfg.id, "relayer", w.relayer.Address, "epoch", epochForVoting.Address, "error", err)
+					}
+					continue
+				}
+				epochForVotingIsChoosen := epochForVotingMap.(map[string]interface{})["value0"].(bool)
+
+				w.log.Info("Epoch for voting info", "IsChoosen", epochForVotingIsChoosen, "Number", epochNumberForVoting, "FirstEraEndsAtInt", epochForVotingEndsAtInt, "FirstEraEndsAtInt DELTA", time.Now().Unix()-epochForVotingEndsAtInt, "SecondEraEndsAtInt", epochForVotingSecondEraEndsAtInt, "SecondEraEndsAtInt DELTA", time.Now().Unix()-epochForVotingSecondEraEndsAtInt)
+
+				epochForRegistrationMap, err := epochForRegistration.IsChoosen(w.relayer.Address).Call()
+				if err != nil {
+					if err.Error() == "unexpected end of JSON input" {
+						w.log.Error("failed to get IsChoosen", "chainId", w.cfg.id, "relayer", w.relayer.Address, "epoch", epochForVoting.Address, "epochNumber", epochNumberForVoting, "error", errors.New("Epoch is not ready now"))
+					} else {
+						w.log.Error("failed to get IsChoosen", "chainId", w.cfg.id, "relayer", w.relayer.Address, "epoch", epochForVoting.Address, "error", err)
+					}
+					continue
+				}
+				epochForRegistrationIsChoosen := epochForRegistrationMap.(map[string]interface{})["value0"].(bool)
+
+				w.log.Info("Epoch for registration info", "IsChoosen", epochForRegistrationIsChoosen, "Number", epochNumberForRegistration, "FirstEndsAtInt", epochForRegistrationEndsAtInt, "FirstEndsAtInt DELTA", time.Now().Unix()-epochForRegistrationEndsAtInt)
+
+				if w.epoch == currentEpochNumber && time.Now().Unix()-epochForVotingSecondEraEndsAtInt < 0 {
 					continue
 				}
 

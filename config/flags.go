@@ -98,6 +98,18 @@ var (
 	}
 )
 
+// Deploy relayer flags
+var (
+	AccessControllerAddress = &cli.StringFlag{
+		Name:  "accessControllerAddress",
+		Usage: "Address of access controller contract ",
+	}
+	BridgeAddress = &cli.StringFlag{
+		Name:  "bridgeAddress",
+		Usage: "Address of bridge contract ",
+	}
+)
+
 var (
 	TONImportFlag = &cli.BoolFlag{
 		Name:  "ton",

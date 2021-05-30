@@ -47,6 +47,11 @@ func handleDeployWalletCmd(ctx *cli.Context, dHandler *dataHandler) error {
 	return execute(ctx, dHandler, deployWallet)
 }
 
+func handleDeployRelayerCmd(ctx *cli.Context, dHandler *dataHandler) error {
+	log.Info("Starting deploy Relayer...")
+	return execute(ctx, dHandler, wrapCtxDeployRelayer(ctx))
+}
+
 func handleGetBalanceCmd(ctx *cli.Context, dHandler *dataHandler) error {
 	log.Info("Getting balance...")
 	return execute(ctx, dHandler, getBalance)
@@ -112,6 +117,53 @@ func execute(ctx *cli.Context, dHandler *dataHandler, fn func(conn *connection.C
 	}
 
 	return nil
+}
+
+func wrapCtxDeployRelayer(ctx *cli.Context) func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
+	return func(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
+		var relayerAddress string
+		var err error
+
+		messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
+			return func(event *client.ProcessingEvent) {}
+		}
+
+		giver, err := NewGiver(conn.Client(), *signer, workchainID)
+		if err != nil {
+			return err
+		}
+
+		ctxcs := ContractContext{
+			Conn:        conn.Client(),
+			Signer:      signer,
+			WorkchainID: workchainID,
+		}
+
+		relayerContract := Relayer{Ctx: ctxcs}
+
+		if relayerAddress, err = relayerContract.Address(); err != nil {
+			return err
+		}
+
+		if _, err = giver.SendGrams(relayerAddress, big.NewInt(200000000000), messageCallback("SendGrams(relayerAddress)")); err != nil {
+			return err
+		}
+
+		time.Sleep(time.Second)
+
+		if _, err = relayerContract.Deploy(
+			&RelayerDeployParams{
+				AccessControllerAddress: ctx.String(config.AccessControllerAddress.Name),
+				MyPublicKey:             "0x" + signer.EnumTypeValue.(client.KeysSigner).Keys.Public,
+				MyInitState:             RelayerTvc,
+				BridgeAddress:           ctx.String(config.BridgeAddress.Name),
+			}, messageCallback("relayerContract.Deploy"),
+		); err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
 func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.Signer, logger log.Logger) error {
@@ -209,16 +261,16 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 		return err
 	}
 
-	fmt.Printf("sender: %s \n", senderAddress)
-	fmt.Printf("receiver: %s \n", receiverAddress)
-	fmt.Printf("accessController: %s \n", accessControllerAddress)
-	fmt.Printf("epochControllerAddress: %s \n", epochControllerAddress)
-	fmt.Printf("bridge: %s \n", bridgeAddress)
-	fmt.Printf("relayer: %s \n", relayerAddress)
-	fmt.Printf("rootTokenContract: %s \n", rootTokenContractAddress)
-	fmt.Printf("tip3Handler: %s \n", tip3HandlerAddress)
-	fmt.Printf("messageHandler: %s \n", messageHandlerAddress)
-	fmt.Printf("burnedTokensHandler: %s \n", burnedTokensHandlerAddress)
+	logger.Info("sender:", senderAddress)
+	logger.Info("receiver:", receiverAddress)
+	logger.Info("accessController:", accessControllerAddress)
+	logger.Info("epochControllerAddress:", epochControllerAddress)
+	logger.Info("bridge:", bridgeAddress)
+	logger.Info("relayer:", relayerAddress)
+	logger.Info("rootTokenContract: ", rootTokenContractAddress)
+	logger.Info("tip3Handler: ", tip3HandlerAddress)
+	logger.Info("messageHandler: ", messageHandlerAddress)
+	logger.Info("burnedTokensHandler: ", burnedTokensHandlerAddress)
 
 	if _, err = accessControllerContract.Deploy(
 		&AccessControllerDeployParams{
@@ -229,7 +281,6 @@ func deploy(conn *connection.Connection, workchainID null.Int32, signer *client.
 		return err
 	}
 	time.Sleep(time.Second)
-	// epochControllerDeployParams *EpochControllerDeployParams, messageCallback
 	if _, err = epochControllerContract.Deploy(&EpochControllerDeployParams{
 		EpochCode:            epochCode.Code,
 		ProposalCode:         proposalCode.Code,
@@ -359,10 +410,6 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 		return err
 	}
 
-	fmt.Printf("accessController: %s \n", accessController.Address)
-	fmt.Printf("bridge: %s \n", bridge.Address)
-	fmt.Printf("relayer: %s \n", relayer.Address)
-
 	// Set Handlers
 	var SimpleMessageResourceID = [32]byte{
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 83, 105, 109, 112, 108, 101, 77, 101, 115, 115, 97, 103, 101, 82, 101, 115, 111, 117, 114, 99, 101,
@@ -389,14 +436,14 @@ func setup(conn *connection.Connection, workchainID null.Int32, signer *client.S
 		return err
 	}
 
-	fmt.Printf("\n %s Handler address: %#v", "0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00", result)
+	logger.Info("Handler", "address", result, "type", "TIP3ResourceID")
 
 	result, err = bridge.GetHandlerAddressByMessageType("0x" + hex.EncodeToString(SimpleMessageResourceID[:])).Call()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("\n %s Handler address: %#v", "0x"+hex.EncodeToString(SimpleMessageResourceID[:]), result)
+	logger.Info("Handler", "address", result, "type", "SimpleMessageResource")
 
 	return nil
 }
@@ -621,7 +668,7 @@ func getBalance(conn *connection.Connection, workchainID null.Int32, signer *cli
 	amount.SetString(result.(Result)["value0"].(WalletDetails)["balance"].(string), 10)
 	amount.Div(amount, big.NewInt(1000000000000))
 
-	fmt.Printf(" \n Balance of %s: %s DTN \n", address, amount)
+	logger.Info("", "Wallet address", address, "balance (DOTON)", amount)
 
 	return nil
 }
@@ -739,7 +786,7 @@ func sendTokens(amount string, to string, nonce string) func(conn *connection.Co
 
 		messageCallback := func(eventLabel string) func(event *client.ProcessingEvent) {
 			return func(event *client.ProcessingEvent) {
-				// logger.Info("Message status:", "label", eventLabel, "Status", event.Type, "MessageID", event.MessageID, "ShardBlockID", event.ShardBlockID)
+				logger.Info("Message status:", "event", event)
 			}
 		}
 

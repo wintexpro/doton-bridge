@@ -130,7 +130,7 @@ func InitializeChain(chainCfg *core.ChainConfig, log log15.Logger, sysErr chan<-
 		return nil, err
 	}
 
-	chain.writer.CheckEpoch(vrfkp)
+	chain.writer.CheckEpoch()
 
 	return chain, err
 }

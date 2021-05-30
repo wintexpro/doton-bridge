@@ -71,6 +71,11 @@ var sendTokensFlags = []cli.Flag{
 	config.NonceFlag,
 }
 
+var deployRelayerFlags = []cli.Flag{
+	config.AccessControllerAddress,
+	config.BridgeAddress,
+}
+
 var accountCommand = cli.Command{
 	Name:  "accounts",
 	Usage: "manage bridge keystore",
@@ -127,6 +132,12 @@ var deployCommand = cli.Command{
 			Action: wrapHandler(handleDeployWalletCmd),
 			Name:   "deploy-wallet",
 			Usage:  "deploy the wallet contract",
+		},
+		{
+			Action: wrapHandler(handleDeployRelayerCmd),
+			Name:   "deploy-relayer",
+			Usage:  "deploy the relayer ton contract",
+			Flags:  deployRelayerFlags,
 		},
 		{
 			Action: wrapHandler(handleGetBalanceCmd),

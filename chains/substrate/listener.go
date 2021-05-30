@@ -254,6 +254,7 @@ func (l *listener) submitMessage(m msg.Message, err error) {
 		log15.Error("Critical error processing event", "err", err)
 		return
 	}
+	l.log.Info("Trying send message", "Source", m.Source, "Destination", m.Destination, "ResourceId", fmt.Sprintf("%x", m.ResourceId), "DepositNonce", m.DepositNonce)
 	m.Source = l.chainId
 	err = l.router.Send(m)
 	if err != nil {

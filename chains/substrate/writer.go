@@ -59,7 +59,7 @@ func (w *writer) ResolveMessage(m msg.Message) bool {
 	}
 
 	if !isActive {
-		w.log.Debug("your relayer is not active now", "public key", fmt.Sprintf("%x", w.vrfkp.Public()))
+		w.log.Info("your relayer is not active now", "public key", fmt.Sprintf("%x", w.vrfkp.Public()))
 		return false
 	}
 
