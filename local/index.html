@@ -1,0 +1,730 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An implementation of a bridge between FreeTON and substrate-based networks">
+      
+      
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.5">
+    
+    
+      
+        <title>Running Locally - DOTON Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.bde7dde4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ef6f36e2.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#000000">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="black" data-md-color-accent="">
+  
+    
+    <script>function __prefix(e){return new URL("..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#doton-local-network" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="DOTON Docs" class="md-header__button md-logo" aria-label="DOTON Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DOTON Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Running Locally
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/wintexpro/doton-bridge/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wintexpro/doton-bridge
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="DOTON Docs" class="md-nav__button md-logo" aria-label="DOTON Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    DOTON Docs
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/wintexpro/doton-bridge/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wintexpro/doton-bridge
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      <label class="md-nav__link" for="__nav_3">
+        Configuration
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-options/" class="md-nav__link">
+        CLI Options
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      <label class="md-nav__link" for="__nav_4">
+        Specification
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Specification" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Specification
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spec/" class="md-nav__link">
+        ChainBridge
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chains/ton/" class="md-nav__link">
+        TON
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chains/substrate/" class="md-nav__link">
+        Substrate
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Running Locally
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Running Locally
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#launching-bridge-components" class="md-nav__link">
+    Launching bridge components
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-local-polkadot-ui" class="md-nav__link">
+    Run local polkadot UI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-polkadot-js-apps" class="md-nav__link">
+    Setting up Polkadot JS Apps
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-substrate-initial-balance" class="md-nav__link">
+    Setting substrate initial balance
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#substrate-ton-transfer" class="md-nav__link">
+    Substrate-TON transfer
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ton-substrate-transfer" class="md-nav__link">
+    TON-Substrate transfer
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#launching-bridge-components" class="md-nav__link">
+    Launching bridge components
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-local-polkadot-ui" class="md-nav__link">
+    Run local polkadot UI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-polkadot-js-apps" class="md-nav__link">
+    Setting up Polkadot JS Apps
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-substrate-initial-balance" class="md-nav__link">
+    Setting substrate initial balance
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#substrate-ton-transfer" class="md-nav__link">
+    Substrate-TON transfer
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ton-substrate-transfer" class="md-nav__link">
+    TON-Substrate transfer
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/wintexpro/doton-bridge/edit/master/docs/local.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="doton-local-network">doton-local-network<a class="headerlink" href="#doton-local-network" title="Permanent link">&para;</a></h1>
+<p>A docker development environment for a doton local network</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.docker.com/engine/install/">docker</a></li>
+<li><a href="https://docs.docker.com/compose/install/">docker-compose</a></li>
+</ul>
+<h2 id="launching-bridge-components">Launching bridge components<a class="headerlink" href="#launching-bridge-components" title="Permanent link">&para;</a></h2>
+<p>If you got some old versions of doton components, make sure that you got latest docker images on your local environment. You can just check your latest tagged images digests with digests on <a href="https://hub.docker.com/u/wintex">dockerhub</a>. Or just remove all local images, because this guide's commands would download them if not find.</p>
+<p>Clone this repo:</p>
+<div class="codehilite"><pre><span></span><code>$ git clone git@github.com:wintexpro/doton-local-network.git
+</code></pre></div>
+
+<p>Inside <code>./doton-local-network</code> directory run:</p>
+<div class="codehilite"><pre><span></span><code>$ make run-chains
+</code></pre></div>
+
+<p>After making sure TON OS SE and substrate services are running, you should run setup script</p>
+<div class="codehilite"><pre><span></span><code>$ make run-setup
+</code></pre></div>
+
+<p>That executes to send initial value to contracts and deploy them to local TON node, also set up a substrate node for interacting with DOTON protocol. After setup, this command attaches you to a docker container with <a href="https://github.com/tonlabs/tonos-cli">tonos-cli</a> and <a href="https://github.com/halva-suite/halva">halva-cli</a> tools.</p>
+<p>Make sure that containers which were launched during previous commands (doton-setup-bridge and doton-setup) stopped their work.</p>
+<p>You need to run the relay nodes by running the command (please, make sure the setup scripts were done):</p>
+<div class="codehilite"><pre><span></span><code>$ make run-alice
+</code></pre></div>
+
+<p>After making sure alice node is running, you must deploy another 2 relayers</p>
+<p>At last, you can run</p>
+<div class="codehilite"><pre><span></span><code>$ <span class="nv">CONFIG_NAME</span><span class="o">=</span>config2.json make deploy-relayer
+$ <span class="nv">CONFIG_NAME</span><span class="o">=</span>config3.json make deploy-relayer
+</code></pre></div>
+
+<p>And run they</p>
+<div class="codehilite"><pre><span></span><code>$ make run-bob
+$ make run-charlie
+</code></pre></div>
+
+<h2 id="run-local-polkadot-ui">Run local polkadot UI<a class="headerlink" href="#run-local-polkadot-ui" title="Permanent link">&para;</a></h2>
+<p>If you need to run local polkadotjs UI, you can run command:</p>
+<div class="codehilite"><pre><span></span><code>$ docker run --rm -it --name polkadot-ui --network doton-local-network_default --link doton-sub-chain -p <span class="m">8001</span>:80 jacogr/polkadot-js-apps:0.79.1
+</code></pre></div>
+
+<h2 id="setting-up-polkadot-js-apps">Setting up Polkadot JS Apps<a class="headerlink" href="#setting-up-polkadot-js-apps" title="Permanent link">&para;</a></h2>
+<p>You can interact with a substrate local node by visiting https://polkadot.js.org/apps/ and choose "Local Node" network</p>
+<p>You will need to add these definitions to the <a href="https://polkadot.js.org/apps/#/settings/developer">developer settings</a>:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+  <span class="nt">&quot;Message&quot;</span><span class="p">:</span> <span class="s2">&quot;Text&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;chainbridge::ChainId&quot;</span><span class="p">:</span> <span class="s2">&quot;u8&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;ExtAddress&quot;</span><span class="p">:</span> <span class="s2">&quot;Text&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;ChainId&quot;</span><span class="p">:</span> <span class="s2">&quot;u8&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;ResourceId&quot;</span><span class="p">:</span> <span class="s2">&quot;[u8; 32]&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;Nonce&quot;</span><span class="p">:</span> <span class="s2">&quot;u64&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;DepositNonce&quot;</span><span class="p">:</span> <span class="s2">&quot;u64&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;ProposalVotes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;votes_for&quot;</span><span class="p">:</span> <span class="s2">&quot;Vec&lt;AccountId&gt;&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;votes_against&quot;</span><span class="p">:</span> <span class="s2">&quot;Vec&lt;AccountId&gt;&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;enum&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;Erc721Token&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;TokenId&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;metadata&quot;</span><span class="p">:</span> <span class="s2">&quot;Vec&lt;u8&gt;&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;TokenId&quot;</span><span class="p">:</span> <span class="s2">&quot;U256&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;Address&quot;</span><span class="p">:</span> <span class="s2">&quot;AccountId&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;LookupSource&quot;</span><span class="p">:</span> <span class="s2">&quot;AccountId&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;VrfResult&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;pk&quot;</span><span class="p">:</span> <span class="s2">&quot;Vec&lt;u8&gt;&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;val&quot;</span><span class="p">:</span> <span class="s2">&quot;Vec&lt;u8&gt;&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;proof&quot;</span><span class="p">:</span> <span class="s2">&quot;Vec&lt;u8&gt;&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="setting-substrate-initial-balance">Setting substrate initial balance<a class="headerlink" href="#setting-substrate-initial-balance" title="Permanent link">&para;</a></h2>
+<p>For working example you should set some balance for account on substrate network. To do this you should perform some steps:
+1. Open an https://polkadot.js.org/apps/
+2. Make sure that local node was choosen
+3. On https://polkadot.js.org/apps/ choose Accounts-&gt;Accounts-&gt;Add account. We reccomend you to create new account, because of existing accounts has got large amount of balance
+4. Go throught Developers-&gt;sudo
+5. On 'Sudo access' tab choose <strong>balances</strong> extrinsic with <strong>setBalance</strong> command
+6. Choose created account for <strong>who</strong> option (Or choose any if you want or didn't create new)
+7. Set <strong>new_free</strong> option with some amount (ex 10000) and click submit sudo.</p>
+<h2 id="substrate-ton-transfer">Substrate-TON transfer<a class="headerlink" href="#substrate-ton-transfer" title="Permanent link">&para;</a></h2>
+<ol>
+<li>On https://polkadot.js.org/apps/ choose developers-&gt;extrinsic</li>
+<li>Set an <em>example</em> value for <strong>submit the following extrinsic</strong> option with <em>transferNative</em> function (to the right)</li>
+<li>Set some <strong>amount</strong> . That value will be transfered to TON network</li>
+<li><strong>recipient</strong> field should be filled with TON recipient address. You can obtain it by launching this command from repository (doton-local-network) root</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>$ make get-balance
+</code></pre></div>
+
+<ol>
+<li>Set <strong>dest_id</strong> to <em>2</em> (chain id of TON network in <code>configs/config.json</code>)</li>
+<li>Click <strong>Submit transaction</strong></li>
+<li>Unlock with password <em>123456</em> and click <strong>Sign and Submit</strong></li>
+</ol>
+<p>Wait for a while and check TON recipient balance with command from <strong>4</strong> . It should be equal with sended amount.</p>
+<h2 id="ton-substrate-transfer">TON-Substrate transfer<a class="headerlink" href="#ton-substrate-transfer" title="Permanent link">&para;</a></h2>
+<p>| Current version doesn't supports any user interface, excepts cli, so this steps can be complicated</p>
+<p>For sending tokens to the substrate network you should use this command from repository root:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">AMOUNT</span><span class="o">=&lt;</span><span class="nv">amount</span><span class="o">&gt;</span> <span class="nv">TO</span><span class="o">=&lt;</span><span class="nv">substrate</span> <span class="nv">address</span><span class="o">&gt;</span> <span class="nv">NONCE</span><span class="o">=&lt;</span><span class="nv">nonce</span><span class="o">&gt;</span> <span class="nv">make</span> <span class="nv">ton</span><span class="o">-</span><span class="k">send</span><span class="o">-</span><span class="nv">tokens</span>
+</code></pre></div>
+
+<p>Parameters:</p>
+<ul>
+<li>\&lt;amount> - amount of tokens that will be sent</li>
+<li>\&lt;substrate address> - adress of substrate recepient</li>
+<li>\&lt;nonce> IMPORTANT! you should increment nonce by yourself. Start with <em>1</em>.</li>
+</ul>
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code>$ <span class="nv">AMOUNT</span><span class="o">=</span><span class="m">10</span> <span class="nv">TO</span><span class="o">=</span>5CaNkosmQfEaLnYjdegNH5KSPAtPeMtkjkM4xAeQMv1gUGCp <span class="nv">NONCE</span><span class="o">=</span><span class="m">1</span> make ton-send-tokens
+</code></pre></div>
+
+<p>Considering ton local node can't produce blocks without a messages, you should run several times previous command with --amount 0 and incremented nonce (one by one, start from previous + 1)</p>
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code>$ <span class="nv">AMOUNT</span><span class="o">=</span><span class="m">0</span> <span class="nv">TO</span><span class="o">=</span>5CaNkosmQfEaLnYjdegNH5KSPAtPeMtkjkM4xAeQMv1gUGCp <span class="nv">NONCE</span><span class="o">=</span><span class="m">2</span> make ton-send-tokens
+$ <span class="nv">AMOUNT</span><span class="o">=</span><span class="m">0</span> <span class="nv">TO</span><span class="o">=</span>5CaNkosmQfEaLnYjdegNH5KSPAtPeMtkjkM4xAeQMv1gUGCp <span class="nv">NONCE</span><span class="o">=</span><span class="m">3</span> make ton-send-tokens
+</code></pre></div>
+
+<p>Wait for a while and check <strong>Accounts</strong> tab on https://polkadot.js.org/apps/. Balance is expected to increase. </p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        <a href="../chains/substrate/" class="md-footer__link md-footer__link--prev" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Substrate
+            </div>
+          </div>
+        </a>
+      
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/wintexpro/doton-bridge" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.d351de03.min.js", "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a1609d9a.min.js"></script>
+      
+    
+  </body>
+</html>
